@@ -3,35 +3,39 @@ import platformsData from '../data/station/platforms.json';
 import facilitiesData from '../data/station/facilities.json';
 import checkpointsData from '../data/simulation/checkpoints.json';
 
-// Supports USB ADB Reverse (localhost) and Local Wi-Fi IP
+// Production or Cloud API Base URL via Expo environment variable
+const ENV_BACKEND_URL = process.env.EXPO_PUBLIC_API_URL ? process.env.EXPO_PUBLIC_API_URL.replace(/\/+$/, '') : '';
 const LOCAL_WIFI_IP = '10.0.5.101';
 const CANDIDATE_URLS = [
+  ENV_BACKEND_URL,
   'http://localhost:3000',
   `http://${LOCAL_WIFI_IP}:3000`,
   'http://10.24.42.26:3000',
   'http://10.0.2.2:3000'
-];
+].filter(Boolean) as string[];
 
 export class ApiService {
   private isOnlineState: boolean = true;
-  private backendBaseUrl: string = 'http://localhost:3000';
+  private backendBaseUrl: string = ENV_BACKEND_URL || 'http://localhost:3000';
 
   constructor() {
     this.checkConnectivity();
   }
 
   public async checkConnectivity(): Promise<boolean> {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 300);
-      const res = await fetch('http://localhost:3000/health', { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        this.backendBaseUrl = 'http://localhost:3000';
-        this.isOnlineState = true;
-        return true;
-      }
-    } catch {}
+    for (const url of CANDIDATE_URLS) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(`${url}/health`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          this.backendBaseUrl = url;
+          this.isOnlineState = true;
+          return true;
+        }
+      } catch {}
+    }
     this.isOnlineState = true; // offline engine handles everything with 100% accuracy
     return true;
   }

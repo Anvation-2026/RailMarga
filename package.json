@@ -6,6 +6,8 @@
     "validate-data": "python scripts/validate_graph.py",
     "test": "node --test server/dist/test_endpoints.js",
     "build:data": "python scripts/build_station_models.py && python scripts/generate_graph.py && python scripts/bundle_mobile_data.py",
+    "build:server": "cd server && npm install && npm run build",
+    "build:web": "cd mobile && npm install && npm run build:web",
     "start:server": "cd server && npm start",
     "dev:server": "cd server && npm run dev",
     "start:mobile": "cd mobile && npx expo start"
