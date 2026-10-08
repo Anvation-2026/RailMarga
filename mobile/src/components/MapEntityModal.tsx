@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
-import { StationNode, localRouter } from '../services/localRouter';
+import { StationNode } from '../services/localRouter';
 import { useBlockageStore } from '../store/blockageStore';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 export interface TappedEntity {
   type: 'PLATFORM' | 'FACILITY' | 'NODE';
@@ -37,8 +38,8 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
   const isBlocked = currentStatus === 'BLOCKED';
   const isCaution = currentStatus === 'LIMITED';
 
-  const statusColor = isBlocked ? '#EF4444' : (isCaution ? '#F59E0B' : '#10B981');
-  const statusLabel = isBlocked ? '🔴 BLOCKED / OUT OF ORDER' : (isCaution ? '🟠 LIMITED ACCESS' : '🟢 OPERATIONAL');
+  const statusColor = isBlocked ? Colors.error : (isCaution ? Colors.warning : Colors.success);
+  const statusLabel = isBlocked ? '● BLOCKED / MAINTENANCE' : (isCaution ? '● LIMITED ACCESS' : '● OPERATIONAL');
 
   return (
     <Modal visible={!!entity} animationType="fade" transparent onRequestClose={onClose}>
@@ -59,7 +60,7 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
 
           {/* Status & Accessibility Tags */}
           <View style={styles.tagsRow}>
-            <View style={[styles.statusPill, { borderColor: statusColor, backgroundColor: `${statusColor}20` }]}>
+            <View style={[styles.statusPill, { borderColor: statusColor, backgroundColor: `${statusColor}15` }]}>
               <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
             </View>
 
@@ -82,7 +83,7 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
 
           {isBlocked && (
             <View style={styles.blockedAlertBox}>
-              <Text style={styles.blockedAlertTitle}>⚠️ Incident Alert Active</Text>
+              <Text style={styles.blockedAlertTitle}>⚠ Incident Alert Active</Text>
               <Text style={styles.blockedAlertDesc}>This location is currently blocked for maintenance. Routing will automatically seek alternate paths.</Text>
             </View>
           )}
@@ -120,7 +121,7 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
             }}
             activeOpacity={0.85}
           >
-            <Text style={styles.navigateNowText}>🧭 Navigate Here</Text>
+            <Text style={styles.navigateNowText}>START NAVIGATION</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -131,59 +132,57 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end'
   },
   sheetContainer: {
-    backgroundColor: '#1E293B',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#334155',
-    shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: -4 }
+    backgroundColor: Colors.bgPrimary,
+    borderTopLeftRadius: Radii.hero,
+    borderTopRightRadius: Radii.hero,
+    padding: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    ...Shadows.floating
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start'
+    alignItems: 'flex-start',
+    marginBottom: Spacing.sm
   },
   titleGroup: {
     flex: 1
   },
   entityTypeLabel: {
     fontSize: 10,
-    fontWeight: '800',
-    color: '#38BDF8',
-    letterSpacing: 1
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    letterSpacing: 0.8,
+    marginBottom: 2
   },
   entityName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F8FAFC',
-    marginTop: 2
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.textPrimary
   },
   closeBtn: {
     padding: 6
   },
   closeText: {
-    color: '#94A3B8',
     fontSize: 18,
-    fontWeight: 'bold'
+    color: Colors.textTertiary,
+    fontWeight: '700'
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginVertical: 12
+    gap: Spacing.xs,
+    marginBottom: Spacing.sm
   },
   statusPill: {
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: Radii.sm,
     borderWidth: 1
   },
   statusPillText: {
@@ -191,102 +190,100 @@ const styles = StyleSheet.create({
     fontWeight: '700'
   },
   levelPill: {
-    backgroundColor: '#0F172A',
+    backgroundColor: Colors.bgSecondary,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border
   },
   levelPillText: {
+    color: Colors.textSecondary,
     fontSize: 11,
-    color: '#94A3B8',
     fontWeight: '600'
   },
   accessiblePill: {
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: Colors.successLight,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#38BDF8'
+    borderColor: Colors.success
   },
   accessiblePillText: {
+    color: Colors.success,
     fontSize: 11,
-    color: '#38BDF8',
     fontWeight: '700'
   },
   detailsText: {
-    fontSize: 12,
-    color: '#CBD5E1',
+    color: Colors.textSecondary,
+    fontSize: 13,
     lineHeight: 18,
-    marginBottom: 10
+    marginBottom: Spacing.md
   },
   blockedAlertBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderRadius: 10,
-    padding: 10,
+    backgroundColor: Colors.errorLight,
+    borderRadius: Radii.md,
+    padding: Spacing.sm,
+    marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: '#EF4444',
-    marginBottom: 14
+    borderColor: Colors.error
   },
   blockedAlertTitle: {
-    color: '#EF4444',
+    color: Colors.error,
     fontSize: 12,
-    fontWeight: 'bold'
+    fontWeight: '700',
+    marginBottom: 2
   },
   blockedAlertDesc: {
-    color: '#FCA5A5',
-    fontSize: 11,
-    marginTop: 2
+    color: Colors.textPrimary,
+    fontSize: 11
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 10
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm
   },
   setStartBtn: {
     flex: 1,
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
-    paddingVertical: 12,
+    backgroundColor: Colors.bgSecondary,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.button,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#10B981'
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   setStartBtnText: {
-    color: '#10B981',
+    color: Colors.textPrimary,
     fontSize: 13,
-    fontWeight: '700'
+    fontWeight: '600'
   },
   setDestBtn: {
     flex: 1,
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
-    paddingVertical: 12,
+    backgroundColor: Colors.bgSecondary,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.button,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#38BDF8'
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   setDestBtnText: {
-    color: '#38BDF8',
+    color: Colors.textPrimary,
     fontSize: 13,
-    fontWeight: '700'
+    fontWeight: '600'
   },
   navigateNowBtn: {
-    backgroundColor: '#0284C7',
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: Colors.goldPrimary,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: Radii.button,
     alignItems: 'center',
-    shadowColor: '#0284C7',
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 }
+    justifyContent: 'center',
+    ...Shadows.floating
   },
   navigateNowText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.5
+    color: Colors.charcoalPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.6
   }
 });

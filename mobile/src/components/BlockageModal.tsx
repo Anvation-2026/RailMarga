@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'rea
 import { useBlockageStore } from '../store/blockageStore';
 import { useNavigationStore } from '../store/navigationStore';
 import { localRouter } from '../services/localRouter';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 interface BlockageModalProps {
   visible: boolean;
@@ -49,7 +50,7 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
         setDestinationNode(p8Node);
         break;
       case 5:
-        // Scenario 5: Blockage Simulation
+        // Scenario 5: Dynamic Blockage Simulation
         setProfile('mobility_disabled');
         setDestinationNode(p8Node);
         const route = await calculateRoute();
@@ -78,8 +79,8 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.badge}>DEMO SIMULATION</Text>
-              <Text style={styles.title}>Judge Sandbox</Text>
+              <Text style={styles.badge}>STATION CONDITIONS & SCENARIOS</Text>
+              <Text style={styles.title}>Incident Simulation</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Text style={styles.closeBtnText}>✕</Text>
@@ -87,8 +88,8 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            {/* 5 Scenario Presets */}
-            <Text style={styles.sectionTitle}>1-Tap Demo Scenarios</Text>
+            {/* 1-Tap Demo Scenarios */}
+            <Text style={styles.sectionTitle}>Quick Test Scenarios</Text>
             <View style={styles.scenarioGrid}>
               <TouchableOpacity
                 style={styles.scenarioBtn}
@@ -101,7 +102,7 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.scenarioBtn, styles.wheelchairBtn]}
+                style={styles.scenarioBtn}
                 onPress={() => runScenario(2)}
                 activeOpacity={0.8}
               >
@@ -115,7 +116,7 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
                 onPress={() => runScenario(3)}
                 activeOpacity={0.8}
               >
-                <Text style={styles.scenarioIcon}>🚶‍♂️</Text>
+                <Text style={styles.scenarioIcon}>👴</Text>
                 <Text style={styles.scenarioTitle}>3. Elderly</Text>
                 <Text style={styles.scenarioSub}>PF 5 avoids stairs</Text>
               </TouchableOpacity>
@@ -125,7 +126,7 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
                 onPress={() => runScenario(4)}
                 activeOpacity={0.8}
               >
-                <Text style={styles.scenarioIcon}>🦯</Text>
+                <Text style={styles.scenarioIcon}>👁️</Text>
                 <Text style={styles.scenarioTitle}>4. Visually Impaired</Text>
                 <Text style={styles.scenarioSub}>Audio & tactile guidance</Text>
               </TouchableOpacity>
@@ -139,46 +140,48 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
             >
               <Text style={styles.rerouteHeroIcon}>⚡</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.rerouteHeroTitle}>5. Live Blockage Simulation</Text>
+                <Text style={styles.rerouteHeroTitle}>5. Dynamic Blockage & Reroute</Text>
                 <Text style={styles.rerouteHeroSub}>
-                  Starts navigation to PF 8 → Blocks Lift 1 → Watches instant dynamic rerouting!
+                  Starts wheelchair navigation to PF 8, then blocks Lift 1 after 1.5s to trigger automatic reroute.
                 </Text>
               </View>
             </TouchableOpacity>
 
-            {/* Individual Blockage Toggles */}
-            <Text style={styles.sectionTitle}>Individual Facility Toggles</Text>
+            {/* Interactive Facility Condition Toggles */}
+            <Text style={styles.sectionTitle}>Current Station Facility Status</Text>
+            <Text style={styles.sectionSub}>Tap any facility below to toggle real-time blockage:</Text>
+
             {facilities.map((fac) => {
               const blocked = isBlocked(fac.id);
               return (
-                <View key={fac.id} style={styles.toggleRow}>
+                <TouchableOpacity
+                  key={fac.id}
+                  style={[styles.facilityRow, blocked && styles.facilityRowBlocked]}
+                  onPress={() => toggleBlockage(fac.id)}
+                  activeOpacity={0.75}
+                >
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.toggleName}>{fac.name}</Text>
-                    <Text style={styles.toggleDesc}>{fac.desc}</Text>
+                    <Text style={styles.facilityName}>{fac.name}</Text>
+                    <Text style={styles.facilityDesc}>{fac.desc}</Text>
                   </View>
-                  <TouchableOpacity
-                    style={[
-                      styles.toggleBtn,
-                      blocked ? styles.toggleBtnBlocked : styles.toggleBtnOpen
-                    ]}
-                    onPress={() => toggleBlockage(fac.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.toggleBtnText}>
-                      {blocked ? '🔴 BLOCKED' : '🟢 OPEN'}
+                  <View style={[styles.statusBadge, blocked ? styles.statusBlocked : styles.statusOpen]}>
+                    <Text style={[styles.statusBadgeText, blocked && styles.statusBlockedText]}>
+                      {blocked ? '🚧 BLOCKED' : '✓ OPEN'}
                     </Text>
-                  </TouchableOpacity>
-                </View>
+                  </View>
+                </TouchableOpacity>
               );
             })}
 
             {/* Reset All Button */}
             <TouchableOpacity
               style={styles.resetBtn}
-              onPress={resetAll}
+              onPress={async () => {
+                await resetAll();
+              }}
               activeOpacity={0.8}
             >
-              <Text style={styles.resetBtnText}>Reset All Blockages to Open</Text>
+              <Text style={styles.resetBtnText}>↺ Reset All Blockages to Open</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -190,159 +193,172 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
 const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     justifyContent: 'flex-end'
   },
   modalCard: {
-    backgroundColor: '#0F172A',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    maxHeight: '88%',
-    borderWidth: 1,
-    borderColor: '#334155'
+    backgroundColor: Colors.bgPrimary,
+    borderTopLeftRadius: Radii.hero,
+    borderTopRightRadius: Radii.hero,
+    padding: Spacing.lg,
+    maxHeight: '85%',
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    ...Shadows.floating
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16
+    marginBottom: Spacing.md
   },
   badge: {
-    color: '#F59E0B',
+    color: Colors.goldDark,
     fontSize: 10,
-    fontWeight: 'bold',
-    letterSpacing: 1
+    fontWeight: '700',
+    letterSpacing: 0.8
   },
   title: {
-    color: '#F8FAFC',
-    fontSize: 22,
-    fontWeight: 'bold'
+    color: Colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 2
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#1E293B',
-    justifyContent: 'center',
-    alignItems: 'center'
+    padding: 6
   },
   closeBtnText: {
-    color: '#94A3B8',
-    fontSize: 16,
-    fontWeight: 'bold'
+    color: Colors.textTertiary,
+    fontSize: 18,
+    fontWeight: '700'
   },
   sectionTitle: {
-    color: '#94A3B8',
+    color: Colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs
+  },
+  sectionSub: {
+    color: Colors.textSecondary,
     fontSize: 12,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginVertical: 10
+    marginBottom: Spacing.sm
   },
   scenarioGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 12
+    gap: Spacing.xs + 2,
+    marginBottom: Spacing.sm
   },
   scenarioBtn: {
     width: '48%',
-    backgroundColor: '#1E293B',
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.md,
+    padding: Spacing.sm,
     borderWidth: 1,
-    borderColor: '#334155'
-  },
-  wheelchairBtn: {
-    borderColor: '#0284C7',
-    backgroundColor: '#0B2545'
+    borderColor: Colors.border,
+    ...Shadows.sm
   },
   scenarioIcon: {
-    fontSize: 24,
+    fontSize: 20,
     marginBottom: 4
   },
   scenarioTitle: {
-    color: '#F8FAFC',
+    color: Colors.textPrimary,
     fontSize: 13,
-    fontWeight: 'bold'
+    fontWeight: '600'
   },
   scenarioSub: {
-    color: '#94A3B8',
+    color: Colors.textSecondary,
     fontSize: 11,
     marginTop: 2
   },
   rerouteHeroBtn: {
+    backgroundColor: Colors.goldTintSolid,
+    borderRadius: Radii.md,
+    padding: Spacing.sm + 2,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#7F1D1D',
-    borderRadius: 14,
-    padding: 14,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
     borderWidth: 1.5,
-    borderColor: '#EF4444',
-    marginBottom: 16,
-    gap: 12
+    borderColor: Colors.goldPrimary,
+    ...Shadows.sm
   },
   rerouteHeroIcon: {
-    fontSize: 28
+    fontSize: 24
   },
   rerouteHeroTitle: {
-    color: '#FFFFFF',
+    color: Colors.charcoalPrimary,
     fontSize: 14,
-    fontWeight: 'bold'
+    fontWeight: '700'
   },
   rerouteHeroSub: {
-    color: '#FEE2E2',
+    color: Colors.textSecondary,
     fontSize: 11,
-    marginTop: 2
+    marginTop: 2,
+    lineHeight: 15
   },
-  toggleRow: {
+  facilityRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
+    backgroundColor: Colors.bgSecondary,
+    padding: Spacing.sm,
+    borderRadius: Radii.md,
+    marginBottom: Spacing.xs,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border
   },
-  toggleName: {
-    color: '#F1F5F9',
+  facilityRowBlocked: {
+    borderColor: Colors.error,
+    backgroundColor: Colors.errorLight
+  },
+  facilityName: {
+    color: Colors.textPrimary,
     fontSize: 13,
     fontWeight: '600'
   },
-  toggleDesc: {
-    color: '#94A3B8',
-    fontSize: 11
-  },
-  toggleBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8
-  },
-  toggleBtnOpen: {
-    backgroundColor: '#064E3B'
-  },
-  toggleBtnBlocked: {
-    backgroundColor: '#7F1D1D'
-  },
-  toggleBtnText: {
-    color: '#FFFFFF',
+  facilityDesc: {
+    color: Colors.textSecondary,
     fontSize: 11,
-    fontWeight: 'bold'
+    marginTop: 2
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radii.sm,
+    borderWidth: 1
+  },
+  statusOpen: {
+    backgroundColor: Colors.successLight,
+    borderColor: Colors.success
+  },
+  statusBlocked: {
+    backgroundColor: Colors.errorLight,
+    borderColor: Colors.error
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.success
+  },
+  statusBlockedText: {
+    color: Colors.error
   },
   resetBtn: {
-    backgroundColor: '#334155',
-    padding: 14,
-    borderRadius: 12,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.button,
+    paddingVertical: Spacing.sm,
     alignItems: 'center',
-    marginTop: 12,
-    marginBottom: 20
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   resetBtnText: {
-    color: '#F8FAFC',
+    color: Colors.textSecondary,
     fontSize: 13,
-    fontWeight: 'bold'
+    fontWeight: '600'
   }
 });

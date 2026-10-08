@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 interface QuickActionBadgesProps {
   onSelectAction: (category: string) => void;
@@ -7,17 +8,17 @@ interface QuickActionBadgesProps {
 
 export const QuickActionBadges: React.FC<QuickActionBadgesProps> = ({ onSelectAction }) => {
   const actions = [
-    { id: 'LIFT', label: 'Lift', icon: '🛗', color: '#0284C7' },
-    { id: 'TOILET', label: 'Restroom', icon: '🚻', color: '#10B981' },
-    { id: 'ACCESSIBLE_TOILET', label: 'Accessible WC', icon: '♿', color: '#6366F1' },
-    { id: 'TICKET_COUNTER', label: 'Ticket', icon: '🎫', color: '#F59E0B' },
-    { id: 'METRO', label: 'Metro', icon: '🚇', color: '#8B5CF6' },
-    { id: 'ENTRANCE', label: 'Exit / Gate', icon: '🚪', color: '#64748B' }
+    { id: 'LIFT', label: 'Lift', icon: '🛗' },
+    { id: 'TOILET', label: 'Restroom', icon: '🚻' },
+    { id: 'ACCESSIBLE_TOILET', label: 'Accessible WC', icon: '♿' },
+    { id: 'TICKET_COUNTER', label: 'Ticket', icon: '🎫' },
+    { id: 'METRO', label: 'Metro', icon: '🚇' },
+    { id: 'ENTRANCE', label: 'Exit / Gate', icon: '🚪' }
   ];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Quick Facilities</Text>
+      <Text style={styles.title}>QUICK FACILITIES</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -26,14 +27,14 @@ export const QuickActionBadges: React.FC<QuickActionBadgesProps> = ({ onSelectAc
         {actions.map((act) => (
           <TouchableOpacity
             key={act.id}
-            style={styles.badge}
+            style={styles.tile}
             onPress={() => onSelectAction(act.id)}
-            activeOpacity={0.75}
+            activeOpacity={0.7}
           >
-            <View style={[styles.iconCircle, { backgroundColor: act.color }]}>
+            <View style={styles.iconContainer}>
               <Text style={styles.iconText}>{act.icon}</Text>
             </View>
-            <Text style={styles.badgeLabel}>{act.label}</Text>
+            <Text style={styles.tileLabel}>{act.label}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -43,45 +44,51 @@ export const QuickActionBadges: React.FC<QuickActionBadgesProps> = ({ onSelectAc
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 6,
-    paddingHorizontal: 12
+    marginVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm
   },
   title: {
-    color: '#94A3B8',
-    fontSize: 13,
+    color: Colors.textSecondary,
+    fontSize: 11,
     fontWeight: '700',
-    textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginBottom: 8
+    marginBottom: Spacing.xs,
+    paddingHorizontal: Spacing.xs
   },
   scrollList: {
     flexDirection: 'row',
-    gap: 12,
-    paddingRight: 12
+    gap: Spacing.xs + 2,
+    paddingRight: Spacing.sm
   },
-  badge: {
+  tile: {
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: Spacing.xs + 2,
+    paddingHorizontal: Spacing.sm,
     alignItems: 'center',
-    width: 72
-  },
-  iconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
     justifyContent: 'center',
+    minWidth: 78,
+    ...Shadows.sm
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.bgSecondary,
     alignItems: 'center',
-    marginBottom: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4
+    justifyContent: 'center',
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: Colors.borderLight
   },
   iconText: {
-    fontSize: 22
+    fontSize: 18
   },
-  badgeLabel: {
-    color: '#E2E8F0',
-    fontSize: 11,
+  tileLabel: {
+    color: Colors.textPrimary,
+    fontSize: 12,
     fontWeight: '600',
     textAlign: 'center'
   }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 export interface ProfileMeta {
   id: string;
@@ -14,14 +15,14 @@ export const PROFILES: ProfileMeta[] = [
     id: 'first_time',
     name: 'First-Time Traveller',
     icon: '🧭',
-    description: 'Prominent landmarks & main corridors',
+    description: 'Simple and clear routes with landmarks',
     badge: 'Standard'
   },
   {
     id: 'elderly',
     name: 'Elderly Person',
     icon: '👴',
-    description: 'Gentle slopes & minimal walking',
+    description: 'Gentle slopes, avoids stairs & lifts',
     badge: 'Low Fatigue'
   },
   {
@@ -35,15 +36,15 @@ export const PROFILES: ProfileMeta[] = [
     id: 'visually_impaired',
     name: 'Visually Impaired',
     icon: '👁️',
-    description: 'Tactile paving & spoken guidance',
+    description: 'Tactile paving & spoken audio guide',
     badge: 'Tactile Audio'
   },
   {
     id: 'mobility_disabled',
     name: 'Mobility Disabled',
     icon: '♿',
-    description: 'Strictly step-free with lifts & ramps',
-    badge: '100% Step-Free'
+    description: '100% step-free accessible routes',
+    badge: 'Step-Free'
   }
 ];
 
@@ -60,7 +61,7 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>ACCESSIBILITY PROFILE</Text>
-        <Text style={styles.subtext}>Affects route calculation & voice prompts</Text>
+        <Text style={styles.subtext}>Prioritizes matching paths</Text>
       </View>
       <ScrollView
         horizontal
@@ -69,31 +70,28 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
       >
         {PROFILES.map((p) => {
           const isSelected = p.id === selectedProfileId;
-          const isWheelchair = p.id === 'mobility_disabled';
 
           return (
             <TouchableOpacity
               key={p.id}
               style={[
                 styles.profileCard,
-                isSelected && (isWheelchair ? styles.wheelchairCardSelected : styles.profileCardSelected)
+                isSelected ? styles.profileCardSelected : styles.profileCardUnselected
               ]}
               onPress={() => onSelectProfile(p.id)}
               activeOpacity={0.8}
             >
               <View style={styles.cardTopRow}>
                 <Text style={styles.profileIcon}>{p.icon}</Text>
-                <View style={[
-                  styles.badgePill,
-                  isSelected && (isWheelchair ? styles.badgePillWheelchair : styles.badgePillSelected)
-                ]}>
-                  <Text style={[
-                    styles.badgeText,
-                    isSelected && (isWheelchair ? styles.badgeTextWheelchair : styles.badgeTextSelected)
-                  ]}>
-                    {p.badge}
-                  </Text>
-                </View>
+                {isSelected ? (
+                  <View style={styles.selectedPill}>
+                    <Text style={styles.selectedPillText}>✓ Selected</Text>
+                  </View>
+                ) : (
+                  <View style={styles.badgePill}>
+                    <Text style={styles.badgeText}>{p.badge}</Text>
+                  </View>
+                )}
               </View>
 
               <Text
@@ -114,13 +112,6 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
               >
                 {p.description}
               </Text>
-
-              {isSelected && (
-                <View style={styles.activeIndicator}>
-                  <View style={[styles.activeDot, isWheelchair && { backgroundColor: '#38BDF8' }]} />
-                  <Text style={[styles.activeLabel, isWheelchair && { color: '#38BDF8' }]}>Active Profile</Text>
-                </View>
-              )}
             </TouchableOpacity>
           );
         })}
@@ -131,122 +122,99 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 8
+    marginVertical: Spacing.xs + 2
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    paddingHorizontal: 16,
-    marginBottom: 8
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.xs
   },
   title: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#94A3B8',
-    letterSpacing: 1.2
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    letterSpacing: 0.8
   },
   subtext: {
-    fontSize: 10,
-    color: '#64748B'
+    fontSize: 11,
+    color: Colors.textTertiary
   },
   scrollContent: {
-    paddingHorizontal: 12,
-    gap: 10
+    paddingHorizontal: Spacing.sm,
+    gap: Spacing.xs + 2
   },
   profileCard: {
-    width: 175,
-    backgroundColor: '#1E293B',
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1.5,
-    borderColor: '#334155',
-    justifyContent: 'space-between'
+    width: 168,
+    borderRadius: Radii.md,
+    padding: Spacing.sm,
+    justifyContent: 'space-between',
+    minHeight: 120
+  },
+  profileCardUnselected: {
+    backgroundColor: Colors.bgPrimary,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadows.sm
   },
   profileCardSelected: {
-    borderColor: '#38BDF8',
-    backgroundColor: 'rgba(14, 165, 233, 0.12)',
-    shadowColor: '#38BDF8',
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 }
-  },
-  wheelchairCardSelected: {
-    borderColor: '#0284C7',
-    backgroundColor: 'rgba(2, 132, 199, 0.18)',
-    shadowColor: '#0284C7',
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 }
+    backgroundColor: Colors.goldTintSolid,
+    borderWidth: 1.5,
+    borderColor: Colors.goldPrimary,
+    ...Shadows.card
   },
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6
+    marginBottom: Spacing.xs
   },
   profileIcon: {
-    fontSize: 24
+    fontSize: 22
   },
   badgePill: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 6,
+    backgroundColor: Colors.bgSurface,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 6
-  },
-  badgePillSelected: {
-    backgroundColor: 'rgba(56, 189, 248, 0.25)'
-  },
-  badgePillWheelchair: {
-    backgroundColor: 'rgba(2, 132, 199, 0.3)'
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.borderLight
   },
   badgeText: {
-    fontSize: 9,
+    fontSize: 10,
+    fontWeight: '600',
+    color: Colors.textSecondary
+  },
+  selectedPill: {
+    backgroundColor: Colors.bgPrimary,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.goldPrimary
+  },
+  selectedPillText: {
+    fontSize: 10,
     fontWeight: '700',
-    color: '#64748B'
-  },
-  badgeTextSelected: {
-    color: '#38BDF8'
-  },
-  badgeTextWheelchair: {
-    color: '#7DD3FC'
+    color: Colors.goldDark
   },
   profileName: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#F1F5F9',
-    marginBottom: 4
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    marginBottom: 3
   },
   profileNameSelected: {
-    color: '#FFFFFF'
+    color: Colors.charcoalPrimary,
+    fontWeight: '700'
   },
   profileDesc: {
-    fontSize: 10,
-    color: '#94A3B8',
-    lineHeight: 14,
-    minHeight: 28
+    fontSize: 11,
+    color: Colors.textSecondary,
+    lineHeight: 15
   },
   profileDescSelected: {
-    color: '#CBD5E1'
-  },
-  activeIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)'
-  },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#38BDF8',
-    marginRight: 6
-  },
-  activeLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#38BDF8'
+    color: Colors.charcoalPrimary
   }
 });

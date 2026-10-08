@@ -14,6 +14,7 @@ import {
 import { useNavigationStore } from '../store/navigationStore';
 import { apiService } from '../services/apiService';
 import { RouteResult } from '../services/localRouter';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 interface Message {
   id: string;
@@ -83,7 +84,7 @@ export const AssistantChatScreen: React.FC<AssistantChatScreenProps> = ({
         {
           id: `asst_err_${Date.now()}`,
           sender: 'assistant',
-          text: "I am having trouble connecting to online services. You can still use deterministic navigation for Platforms 1 to 10.",
+          text: "I am having trouble connecting to online services. You can still use deterministic offline navigation for Platforms 1 to 10.",
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
@@ -93,11 +94,11 @@ export const AssistantChatScreen: React.FC<AssistantChatScreenProps> = ({
   };
 
   const quickPrompts = [
-    "I'm using a wheelchair and need Platform 8",
-    "Find nearest restroom",
-    "Where is the nearest lift?",
-    "Take me to Metro",
-    "Lift 1 is blocked, give another route"
+    "Take me to Platform 8",
+    "Find nearest lift",
+    "Is Lift 2 available?",
+    "Why did my route change?",
+    "Find an accessible route"
   ];
 
   const renderMessage = ({ item }: { item: Message }) => {
@@ -109,19 +110,24 @@ export const AssistantChatScreen: React.FC<AssistantChatScreenProps> = ({
             {item.text}
           </Text>
 
-          {/* Interactive Route Card inside chat */}
+          {/* Structured AI Navigation Card */}
           {item.route && (
             <View style={styles.chatRouteCard}>
               <View style={styles.routeCardHeader}>
-                <Text style={styles.routeIcon}>
-                  {item.route.accessibility.wheelchairAccessible ? '♿' : '🧭'}
-                </Text>
+                <View style={styles.routeIconWrapper}>
+                  <Text style={styles.routeIcon}>
+                    {item.route.accessibility.wheelchairAccessible ? '♿' : '🧭'}
+                  </Text>
+                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.routeDestTitle}>
                     {item.route.destination.name}
                   </Text>
                   <Text style={styles.routeStats}>
-                    {item.route.totalDistanceMeters}m • ~{item.route.estimatedTimeMinutes} min • {item.route.steps.length} steps
+                    {item.route.totalDistanceMeters}m • {item.route.estimatedTimeMinutes} min • {item.route.steps.length} steps
+                  </Text>
+                  <Text style={styles.accessibleTag}>
+                    {item.route.accessibility.stepFree ? '✓ 100% Step-free' : 'Standard route'}
                   </Text>
                 </View>
               </View>
@@ -129,9 +135,9 @@ export const AssistantChatScreen: React.FC<AssistantChatScreenProps> = ({
               <TouchableOpacity
                 style={styles.startNavBtn}
                 onPress={() => onStartRoute(item.route!)}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <Text style={styles.startNavBtnText}>START NAVIGATION →</Text>
+                <Text style={styles.startNavBtnText}>START NAVIGATION</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -144,62 +150,64 @@ export const AssistantChatScreen: React.FC<AssistantChatScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
-        <View style={styles.headerTitleBox}>
-          <Text style={styles.headerTitle}>RailMarga Assistant</Text>
-          <Text style={styles.headerSub}>Grounded AI Indoor Navigator</Text>
+        <View style={styles.headerTitleGroup}>
+          <Text style={styles.headerTitle}>ASK RAILMARGA</Text>
+          <Text style={styles.headerSub}>Your station navigation assistant</Text>
         </View>
-        <View style={{ width: 60 }} />
+        <View style={{ width: 44 }} />
       </View>
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <FlatList
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.chatList}
-          showsVerticalScrollIndicator={false}
-        />
-
-        {loading && (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator size="small" color="#38BDF8" />
-            <Text style={styles.loadingText}>RailMarga is consulting station graph...</Text>
-          </View>
-        )}
-
-        {/* Quick Suggestion Pills */}
-        <View style={styles.pillsRow}>
+        {/* Suggested Prompt Chips */}
+        <View style={styles.chipsRow}>
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
             data={quickPrompts}
             keyExtractor={(item) => item}
-            contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}
+            contentContainerStyle={{ paddingHorizontal: Spacing.sm, gap: Spacing.xs }}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={styles.pill}
+                style={styles.promptChip}
                 onPress={() => handleSend(item)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.pillText}>{item}</Text>
+                <Text style={styles.promptChipText}>{item}</Text>
               </TouchableOpacity>
             )}
           />
         </View>
 
+        {/* Message Thread */}
+        <FlatList
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          contentContainerStyle={styles.messagesList}
+          showsVerticalScrollIndicator={false}
+        />
+
+        {loading && (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator size="small" color={Colors.goldPrimary} />
+            <Text style={styles.loadingText}>RailMarga is thinking...</Text>
+          </View>
+        )}
+
         {/* Input Bar */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Ask about platforms, routes, or facilities..."
-            placeholderTextColor="#64748B"
+            placeholder="Ask about platforms, lifts, accessible paths..."
+            placeholderTextColor={Colors.textTertiary}
             value={inputText}
             onChangeText={setInputText}
             onSubmitEditing={() => handleSend()}
@@ -211,7 +219,7 @@ export const AssistantChatScreen: React.FC<AssistantChatScreenProps> = ({
             disabled={!inputText.trim() || loading}
             activeOpacity={0.8}
           >
-            <Text style={styles.sendBtnText}>➤</Text>
+            <Text style={styles.sendBtnText}>↑</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -222,184 +230,212 @@ export const AssistantChatScreen: React.FC<AssistantChatScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0B1120'
+    backgroundColor: Colors.bgSecondary
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 14,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    backgroundColor: Colors.bgPrimary,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B'
+    borderBottomColor: Colors.border
   },
   backBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: '#1E293B',
-    borderRadius: 8
+    paddingVertical: 4
   },
   backBtnText: {
-    color: '#38BDF8',
-    fontWeight: 'bold',
-    fontSize: 14
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontSize: 13
   },
-  headerTitleBox: {
+  headerTitleGroup: {
     alignItems: 'center'
   },
   headerTitle: {
-    color: '#F8FAFC',
-    fontSize: 16,
-    fontWeight: 'bold'
+    color: Colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.8
   },
   headerSub: {
-    color: '#94A3B8',
-    fontSize: 10
+    color: Colors.textSecondary,
+    fontSize: 10,
+    marginTop: 1
   },
-  chatList: {
-    padding: 14,
-    gap: 12
+  chipsRow: {
+    paddingVertical: Spacing.xs,
+    backgroundColor: Colors.bgPrimary,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border
+  },
+  promptChip: {
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.pill,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  promptChipText: {
+    color: Colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '500'
+  },
+  messagesList: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.sm
   },
   msgWrapper: {
-    flexDirection: 'row',
-    marginBottom: 6
+    marginVertical: 2
   },
   userWrapper: {
-    justifyContent: 'flex-end'
+    alignItems: 'flex-end'
   },
   assistantWrapper: {
-    justifyContent: 'flex-start'
+    alignItems: 'flex-start'
   },
   msgBubble: {
     maxWidth: '85%',
-    borderRadius: 16,
-    padding: 12
+    padding: Spacing.sm,
+    borderRadius: Radii.md
   },
   userBubble: {
-    backgroundColor: '#0284C7',
-    borderBottomRightRadius: 4
+    backgroundColor: Colors.bgSurface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderBottomRightRadius: 2
   },
   assistantBubble: {
-    backgroundColor: '#1E293B',
-    borderBottomLeftRadius: 4,
+    backgroundColor: Colors.bgPrimary,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.goldPrimary,
+    borderBottomLeftRadius: 2,
+    ...Shadows.sm
   },
   msgText: {
     fontSize: 14,
     lineHeight: 20
   },
   userText: {
-    color: '#FFFFFF'
+    color: Colors.textPrimary
   },
   assistantText: {
-    color: '#F1F5F9'
+    color: Colors.textPrimary
   },
   msgTime: {
-    color: '#94A3B8',
     fontSize: 9,
-    alignSelf: 'flex-end',
-    marginTop: 4
+    color: Colors.textTertiary,
+    marginTop: 4,
+    alignSelf: 'flex-end'
   },
   chatRouteCard: {
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 10,
-    borderWidth: 1.5,
-    borderColor: '#0284C7'
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.md,
+    padding: Spacing.sm,
+    marginTop: Spacing.xs + 2,
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   routeCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 10
+    gap: Spacing.xs,
+    marginBottom: Spacing.xs
+  },
+  routeIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.goldTintSolid,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.goldLight
   },
   routeIcon: {
-    fontSize: 24
+    fontSize: 16
   },
   routeDestTitle: {
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     fontSize: 14,
-    fontWeight: 'bold'
+    fontWeight: '700'
   },
   routeStats: {
-    color: '#38BDF8',
-    fontSize: 11
+    color: Colors.textSecondary,
+    fontSize: 11,
+    marginTop: 1
+  },
+  accessibleTag: {
+    color: Colors.success,
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2
   },
   startNavBtn: {
-    backgroundColor: '#0284C7',
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center'
+    backgroundColor: Colors.goldPrimary,
+    borderRadius: Radii.button,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.xs
   },
   startNavBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold'
+    color: Colors.charcoalPrimary,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6
   },
   loadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    gap: 8
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs
   },
   loadingText: {
-    color: '#94A3B8',
-    fontSize: 11
-  },
-  pillsRow: {
-    paddingVertical: 6,
-    backgroundColor: '#0F172A',
-    borderTopWidth: 1,
-    borderTopColor: '#1E293B'
-  },
-  pill: {
-    backgroundColor: '#1E293B',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#334155'
-  },
-  pillText: {
-    color: '#E0F2FE',
+    color: Colors.textSecondary,
     fontSize: 12
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    backgroundColor: '#0B1120',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    backgroundColor: Colors.bgPrimary,
     borderTopWidth: 1,
-    borderTopColor: '#1E293B',
-    gap: 8
+    borderTopColor: Colors.border,
+    gap: Spacing.xs
   },
   input: {
     flex: 1,
-    backgroundColor: '#1E293B',
-    color: '#F8FAFC',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    height: 44,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.pill,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    color: Colors.textPrimary,
+    fontSize: 14,
     borderWidth: 1,
-    borderColor: '#334155',
-    fontSize: 13
+    borderColor: Colors.border
   },
   sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#0284C7',
-    justifyContent: 'center',
-    alignItems: 'center'
+    width: 36,
+    height: 36,
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.goldPrimary,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   sendBtnDisabled: {
-    backgroundColor: '#334155'
+    opacity: 0.35
   },
   sendBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold'
+    color: Colors.charcoalPrimary,
+    fontSize: 18,
+    fontWeight: '800'
   }
 });

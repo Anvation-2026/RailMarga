@@ -10,6 +10,7 @@ import {
 import { useNavigationStore } from '../store/navigationStore';
 import { apiService } from '../services/apiService';
 import { localRouter } from '../services/localRouter';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 interface FacilityFinderScreenProps {
   onBack: () => void;
@@ -62,7 +63,9 @@ export const FacilityFinderScreen: React.FC<FacilityFinderScreenProps> = ({
             <Text style={styles.facilityType}>{item.type}</Text>
           </View>
           <View style={[styles.statusBadge, isBlocked ? styles.statusBlocked : styles.statusOpen]}>
-            <Text style={styles.statusText}>{isBlocked ? 'BLOCKED' : 'OPEN'}</Text>
+            <Text style={[styles.statusText, isBlocked && styles.statusBlockedText]}>
+              {isBlocked ? '● BLOCKED' : '● OPEN'}
+            </Text>
           </View>
         </View>
 
@@ -70,11 +73,11 @@ export const FacilityFinderScreen: React.FC<FacilityFinderScreenProps> = ({
 
         <View style={styles.footerRow}>
           <Text style={styles.accessText}>
-            {item.accessibility?.wheelchairAccessible ? '♿ Accessible' : 'Standard'}
+            {item.accessibility?.wheelchairAccessible ? '✓ Wheelchair accessible' : 'Standard facility'}
           </Text>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             <TouchableOpacity
-              style={[styles.navBtn, { backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#10B981' }]}
+              style={styles.auxBtn}
               onPress={() => {
                 const node = localRouter.nodeDict.get(`node_${item.id}`) || localRouter.nodeDict.get('node_t1_toilet');
                 if (node) {
@@ -84,11 +87,11 @@ export const FacilityFinderScreen: React.FC<FacilityFinderScreenProps> = ({
               }}
               activeOpacity={0.8}
             >
-              <Text style={[styles.navBtnText, { color: '#10B981' }]}>📍 Start</Text>
+              <Text style={styles.auxBtnText}>📍 Start</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.navBtn, { backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#38BDF8' }]}
+              style={styles.auxBtn}
               onPress={() => {
                 const node = localRouter.nodeDict.get(`node_${item.id}`) || localRouter.nodeDict.get('node_t1_toilet');
                 if (node) {
@@ -98,13 +101,13 @@ export const FacilityFinderScreen: React.FC<FacilityFinderScreenProps> = ({
               }}
               activeOpacity={0.8}
             >
-              <Text style={[styles.navBtnText, { color: '#38BDF8' }]}>🎯 Dest</Text>
+              <Text style={styles.auxBtnText}>🎯 Dest</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.navBtn}
               onPress={() => handleNavigate(item)}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
               <Text style={styles.navBtnText}>🧭 Go →</Text>
             </TouchableOpacity>
@@ -120,7 +123,7 @@ export const FacilityFinderScreen: React.FC<FacilityFinderScreenProps> = ({
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Find Facility</Text>
+        <Text style={styles.headerTitle}>Station Directory</Text>
         <View style={{ width: 60 }} />
       </View>
 
@@ -131,7 +134,7 @@ export const FacilityFinderScreen: React.FC<FacilityFinderScreenProps> = ({
           showsHorizontalScrollIndicator={false}
           data={categories}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}
+          contentContainerStyle={{ paddingHorizontal: Spacing.md, gap: Spacing.xs }}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[
@@ -153,19 +156,6 @@ export const FacilityFinderScreen: React.FC<FacilityFinderScreenProps> = ({
         />
       </View>
 
-      {/* Wheelchair Accessible Filter Checkbox */}
-      <TouchableOpacity
-        style={styles.wheelchairToggle}
-        onPress={() => setWheelchairOnly(!wheelchairOnly)}
-        activeOpacity={0.8}
-      >
-        <View style={[styles.checkbox, wheelchairOnly && styles.checkboxActive]}>
-          {wheelchairOnly && <Text style={styles.checkmark}>✓</Text>}
-        </View>
-        <Text style={styles.wheelchairToggleText}>Show Wheelchair-Accessible Only (♿)</Text>
-      </TouchableOpacity>
-
-      {/* Facilities List */}
       <FlatList
         data={facilities}
         keyExtractor={(item) => item.id}
@@ -180,99 +170,69 @@ export const FacilityFinderScreen: React.FC<FacilityFinderScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0B1120'
+    backgroundColor: Colors.bgSecondary
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    backgroundColor: Colors.bgPrimary,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B'
+    borderBottomColor: Colors.border
   },
   backBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: '#1E293B',
-    borderRadius: 8
+    paddingVertical: 4
   },
   backBtnText: {
-    color: '#38BDF8',
-    fontWeight: 'bold',
-    fontSize: 14
-  },
-  headerTitle: {
-    color: '#F8FAFC',
-    fontSize: 18,
-    fontWeight: 'bold'
-  },
-  filterRow: {
-    paddingVertical: 10,
-    backgroundColor: '#0F172A',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1E293B'
-  },
-  filterTab: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    backgroundColor: '#1E293B',
-    borderWidth: 1,
-    borderColor: '#334155'
-  },
-  filterTabActive: {
-    backgroundColor: '#0284C7',
-    borderColor: '#38BDF8'
-  },
-  filterTabText: {
-    color: '#94A3B8',
-    fontSize: 12,
+    color: Colors.textPrimary,
+    fontSize: 13,
     fontWeight: '600'
   },
-  filterTabTextActive: {
-    color: '#FFFFFF',
-    fontWeight: 'bold'
+  headerTitle: {
+    color: Colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700'
   },
-  wheelchairToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-    backgroundColor: '#0B1120'
+  filterRow: {
+    backgroundColor: Colors.bgPrimary,
+    paddingVertical: Spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border
   },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: '#64748B',
-    justifyContent: 'center',
-    alignItems: 'center'
+  filterTab: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 6,
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: Colors.border
   },
-  checkboxActive: {
-    backgroundColor: '#0284C7',
-    borderColor: '#38BDF8'
+  filterTabActive: {
+    backgroundColor: Colors.goldTintSolid,
+    borderColor: Colors.goldPrimary
   },
-  checkmark: {
-    color: '#FFFFFF',
+  filterTabText: {
+    color: Colors.textSecondary,
     fontSize: 12,
-    fontWeight: 'bold'
+    fontWeight: '500'
   },
-  wheelchairToggleText: {
-    color: '#CBD5E1',
-    fontSize: 13
+  filterTabTextActive: {
+    color: Colors.goldDark,
+    fontWeight: '700'
   },
   listContent: {
-    padding: 14,
-    gap: 10
+    padding: Spacing.sm,
+    gap: Spacing.xs + 2
   },
   facilityCard: {
-    backgroundColor: '#1E293B',
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.md,
+    padding: Spacing.sm + 2,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border,
+    ...Shadows.sm
   },
   cardHeader: {
     flexDirection: 'row',
@@ -281,60 +241,76 @@ const styles = StyleSheet.create({
     marginBottom: 6
   },
   facilityTitle: {
-    color: '#F8FAFC',
+    color: Colors.textPrimary,
     fontSize: 15,
-    fontWeight: 'bold'
+    fontWeight: '700'
   },
   facilityType: {
-    color: '#38BDF8',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 1
+    color: Colors.textSecondary,
+    fontSize: 10,
+    marginTop: 1,
+    fontWeight: '600'
   },
   statusBadge: {
-    paddingVertical: 3,
     paddingHorizontal: 8,
-    borderRadius: 8
+    paddingVertical: 3,
+    borderRadius: Radii.sm,
+    borderWidth: 1
   },
   statusOpen: {
-    backgroundColor: '#064E3B'
+    backgroundColor: Colors.successLight,
+    borderColor: Colors.success
   },
   statusBlocked: {
-    backgroundColor: '#7F1D1D'
+    backgroundColor: Colors.errorLight,
+    borderColor: Colors.error
   },
   statusText: {
-    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: 'bold'
+    fontWeight: '700',
+    color: Colors.success
+  },
+  statusBlockedText: {
+    color: Colors.error
   },
   descText: {
-    color: '#94A3B8',
+    color: Colors.textSecondary,
     fontSize: 12,
-    lineHeight: 16,
-    marginBottom: 10
+    lineHeight: 17,
+    marginBottom: Spacing.sm
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#334155',
-    paddingTop: 8
+    alignItems: 'center'
   },
   accessText: {
-    color: '#10B981',
+    color: Colors.success,
+    fontSize: 11,
+    fontWeight: '600'
+  },
+  auxBtn: {
+    backgroundColor: Colors.bgSecondary,
+    paddingHorizontal: Spacing.xs + 2,
+    paddingVertical: 6,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  auxBtnText: {
+    color: Colors.textPrimary,
     fontSize: 11,
     fontWeight: '600'
   },
   navBtn: {
-    backgroundColor: '#0284C7',
+    backgroundColor: Colors.goldPrimary,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8
+    borderRadius: Radii.sm
   },
   navBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold'
+    color: Colors.charcoalPrimary,
+    fontSize: 11,
+    fontWeight: '700'
   }
 });

@@ -73,7 +73,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" backgroundColor="#0B1120" />
+      <StatusBar style="dark" backgroundColor="#FFFFFF" />
       {renderScreen()}
     </View>
   );
@@ -82,6 +82,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1120'
+    backgroundColor: '#FFFFFF'
   }
 });

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { StationNode } from '../services/localRouter';
 import { SourceMethod, DestinationMethod } from '../store/navigationStore';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 interface NavigationInputCardProps {
   startNode: StationNode | null;
@@ -57,7 +58,7 @@ export const NavigationInputCard: React.FC<NavigationInputCardProps> = ({
 
         <View style={styles.contentCol}>
           <View style={styles.labelRow}>
-            <Text style={styles.label}>FROM (STARTING POINT)</Text>
+            <Text style={styles.label}>FROM</Text>
             {startNode && sourceMethod && (
               <View style={styles.methodBadge}>
                 <Text style={styles.methodBadgeText}>{getMethodBadge(sourceMethod)}</Text>
@@ -91,7 +92,7 @@ export const NavigationInputCard: React.FC<NavigationInputCardProps> = ({
                 onPress={onOpenSourceSearch}
                 activeOpacity={0.7}
               >
-                <Text style={styles.placeholderText}>Where are you starting?</Text>
+                <Text style={styles.placeholderText}>Select starting point</Text>
               </TouchableOpacity>
               <View style={styles.quickSourceActions}>
                 <TouchableOpacity style={styles.actionChip} onPress={onSelectSourceOnMap}>
@@ -129,7 +130,7 @@ export const NavigationInputCard: React.FC<NavigationInputCardProps> = ({
 
         <View style={styles.contentCol}>
           <View style={styles.labelRow}>
-            <Text style={styles.label}>TO (DESTINATION)</Text>
+            <Text style={styles.label}>TO</Text>
             {destinationNode && destinationMethod && (
               <View style={styles.methodBadge}>
                 <Text style={styles.methodBadgeText}>{getMethodBadge(destinationMethod)}</Text>
@@ -163,7 +164,7 @@ export const NavigationInputCard: React.FC<NavigationInputCardProps> = ({
                 onPress={onOpenDestinationSearch}
                 activeOpacity={0.7}
               >
-                <Text style={styles.placeholderText}>Where do you want to go?</Text>
+                <Text style={styles.placeholderText}>Select destination</Text>
               </TouchableOpacity>
               <View style={styles.quickSourceActions}>
                 <TouchableOpacity style={styles.actionChip} onPress={onSelectDestinationOnMap}>
@@ -180,17 +181,14 @@ export const NavigationInputCard: React.FC<NavigationInputCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1E293B',
-    borderRadius: 16,
-    padding: 14,
-    marginHorizontal: 12,
-    marginVertical: 6,
-    borderWidth: 1.5,
-    borderColor: '#334155',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 }
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.lg,
+    padding: Spacing.md,
+    marginHorizontal: Spacing.sm,
+    marginVertical: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadows.card
   },
   row: {
     flexDirection: 'row',
@@ -199,33 +197,32 @@ const styles = StyleSheet.create({
   iconCol: {
     alignItems: 'center',
     width: 32,
-    marginRight: 10,
-    paddingTop: 4
+    marginRight: Spacing.xs + 2,
+    paddingTop: 3
   },
   circleIcon: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: Radii.pill,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    borderWidth: 1
   },
   startIcon: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderWidth: 1.5,
-    borderColor: '#10B981'
+    backgroundColor: Colors.bgSurface,
+    borderColor: Colors.borderStrong
   },
   destIcon: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    borderWidth: 1.5,
-    borderColor: '#EF4444'
+    backgroundColor: Colors.goldTintSolid,
+    borderColor: Colors.goldPrimary
   },
   circleText: {
     fontSize: 13
   },
   verticalDottedLine: {
     width: 2,
-    height: 28,
-    backgroundColor: '#475569',
+    height: 30,
+    backgroundColor: Colors.borderLight,
     marginTop: 4,
     marginBottom: 4,
     borderRadius: 1
@@ -240,118 +237,118 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
   label: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#94A3B8',
-    letterSpacing: 0.9
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    letterSpacing: 0.8
   },
   methodBadge: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 6,
+    backgroundColor: Colors.bgSurface,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border
   },
   methodBadgeText: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '600',
-    color: '#38BDF8'
+    color: Colors.textSecondary
   },
   selectedLocationBox: {
-    backgroundColor: '#0F172A',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.button,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs + 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border
   },
   locationTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#F8FAFC'
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   locationSub: {
-    fontSize: 11,
-    color: '#64748B',
+    fontSize: 12,
+    color: Colors.textSecondary,
     marginTop: 2
   },
   clearBtn: {
-    padding: 4,
-    marginLeft: 8
+    padding: 6,
+    marginLeft: Spacing.xs
   },
   clearBtnText: {
-    color: '#94A3B8',
+    color: Colors.textTertiary,
     fontSize: 14,
     fontWeight: '700'
   },
   emptyPromptRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8
+    gap: Spacing.xs
   },
   emptyPromptBtn: {
     flex: 1,
-    backgroundColor: '#0F172A',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.button,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
     borderWidth: 1,
-    borderColor: '#334155',
-    borderStyle: 'dashed'
+    borderColor: Colors.borderLight
   },
   placeholderText: {
-    fontSize: 13,
-    color: '#64748B',
-    fontWeight: '500'
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '400'
   },
   quickSourceActions: {
     flexDirection: 'row',
     gap: 6
   },
   actionChip: {
-    backgroundColor: '#0F172A',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    backgroundColor: Colors.bgSurface,
+    borderRadius: Radii.sm,
+    paddingHorizontal: Spacing.xs + 2,
+    paddingVertical: Spacing.xs,
     borderWidth: 1,
-    borderColor: '#38BDF8'
+    borderColor: Colors.border
   },
   actionChipText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#38BDF8'
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   swapRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 4,
-    paddingLeft: 42
+    paddingLeft: 40
   },
   swapDividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#334155'
+    backgroundColor: Colors.borderLight
   },
   swapBtn: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#0F172A',
-    borderWidth: 1.5,
-    borderColor: '#38BDF8',
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.bgPrimary,
+    borderWidth: 1,
+    borderColor: Colors.goldPrimary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 12,
-    marginRight: 8
+    marginLeft: Spacing.sm,
+    marginRight: Spacing.xs,
+    ...Shadows.sm
   },
   swapIcon: {
-    color: '#38BDF8',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: -2
+    color: Colors.goldDark,
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: -1
   }
 });

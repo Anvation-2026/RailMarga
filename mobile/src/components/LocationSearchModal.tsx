@@ -12,6 +12,7 @@ import {
 import { StationNode, localRouter } from '../services/localRouter';
 import platformsData from '../data/station/platforms.json';
 import facilitiesData from '../data/station/facilities.json';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 interface LocationSearchModalProps {
   visible: boolean;
@@ -133,11 +134,11 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
 
         {/* Search Input */}
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Text style={styles.searchIcon}>🔎</Text>
           <TextInput
             style={styles.searchInput}
             placeholder={mode === 'source' ? "Search starting point (e.g. Platform 1, Main Entrance)" : "Search destination (e.g. Platform 8, Lift 1, WC)"}
-            placeholderTextColor="#64748B"
+            placeholderTextColor={Colors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoFocus
@@ -165,7 +166,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
                 styles.categoryTabText,
                 selectedCategory === cat && styles.categoryTabTextSelected
               ]}>
-                {cat === 'ALL' ? 'All' : (cat === 'PLATFORMS' ? 'Platforms 1-10' : (cat === 'FACILITIES' ? 'Lifts & WC' : 'Gates'))}
+                {cat === 'ALL' ? 'All' : (cat === 'PLATFORMS' ? 'Platforms' : (cat === 'FACILITIES' ? 'Lifts & WC' : 'Gates'))}
               </Text>
             </TouchableOpacity>
           ))}
@@ -211,107 +212,108 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1120'
+    backgroundColor: Colors.bgPrimary
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B'
+    borderBottomColor: Colors.border
   },
   closeBtn: {
-    padding: 6
+    padding: Spacing.xs
   },
   closeBtnText: {
-    color: '#94A3B8',
-    fontSize: 20,
-    fontWeight: 'bold'
+    color: Colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '700'
   },
   title: {
-    color: '#F8FAFC',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1
+    color: Colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.8
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginVertical: 10,
-    paddingHorizontal: 12,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.md,
+    marginHorizontal: Spacing.md,
+    marginVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border
   },
   searchIcon: {
     fontSize: 16,
-    marginRight: 8
+    marginRight: Spacing.xs
   },
   searchInput: {
     flex: 1,
     height: 44,
-    color: '#F8FAFC',
+    color: Colors.textPrimary,
     fontSize: 14
   },
   clearBtn: {
     padding: 6
   },
   clearBtnText: {
-    color: '#64748B',
-    fontSize: 14
+    color: Colors.textTertiary,
+    fontSize: 14,
+    fontWeight: '700'
   },
   categoriesRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 8,
-    marginBottom: 8
+    paddingHorizontal: Spacing.md,
+    gap: Spacing.xs,
+    marginBottom: Spacing.sm
   },
   categoryTab: {
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#1E293B',
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.bgSecondary,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.borderLight
   },
   categoryTabSelected: {
-    backgroundColor: '#0284C7',
-    borderColor: '#38BDF8'
+    backgroundColor: Colors.goldTintSolid,
+    borderColor: Colors.goldPrimary
   },
   categoryTabText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#94A3B8'
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary
   },
   categoryTabTextSelected: {
-    color: '#FFFFFF'
+    color: Colors.goldDark,
+    fontWeight: '700'
   },
   listContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 6
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.xxl
   },
   resultItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#131D31',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#1E293B'
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight
   },
   itemIconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#1E293B',
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.bgSecondary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12
+    marginRight: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.borderLight
   },
   itemIcon: {
     fontSize: 18
@@ -321,40 +323,39 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#F8FAFC'
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   itemBadge: {
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2
   },
   selectArrow: {
-    color: '#38BDF8',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 8
+    fontSize: 16,
+    color: Colors.textTertiary,
+    marginLeft: Spacing.xs
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 24
+    paddingVertical: Spacing.xxxl,
+    paddingHorizontal: Spacing.xl
   },
   emptyIcon: {
-    fontSize: 36,
-    marginBottom: 12
+    fontSize: 32,
+    marginBottom: Spacing.xs
   },
   emptyText: {
-    color: '#E2E8F0',
     fontSize: 14,
     fontWeight: '600',
-    textAlign: 'center'
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 4
   },
   emptySub: {
-    color: '#64748B',
     fontSize: 12,
-    marginTop: 6,
+    color: Colors.textSecondary,
     textAlign: 'center'
   }
 });

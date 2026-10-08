@@ -5,14 +5,11 @@ import {
   Dimensions,
   TouchableOpacity,
   Text,
-  PanResponder,
-  GestureResponderEvent
+  PanResponder
 } from 'react-native';
 import Svg, {
   SvgXml,
-  Rect,
   Circle,
-  Path,
   G,
   Text as SvgText,
   Polyline,
@@ -26,6 +23,7 @@ import platformsData from '../data/station/platforms.json';
 import facilitiesData from '../data/station/facilities.json';
 import { useBlockageStore } from '../store/blockageStore';
 import { KSR_STATION_SVG_STRING } from '../data/station/ksrStationSvg';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAP_WIDTH = 3456;
@@ -81,7 +79,7 @@ export const KsrMap: React.FC<KsrMapProps> = ({
   const containerWidth = isFullscreen ? SCREEN_WIDTH : SCREEN_WIDTH - 24;
   const containerHeight = isFullscreen
     ? Dimensions.get('window').height - 120
-    : Math.max(280, containerWidth * ASPECT_RATIO + 40);
+    : Math.max(300, containerWidth * ASPECT_RATIO + 40);
 
   // Base rendered dimensions maintaining exact 2:1 aspect ratio
   const baseScale = Math.min(containerWidth / MAP_WIDTH, (containerHeight - 40) / MAP_HEIGHT);
@@ -167,7 +165,7 @@ export const KsrMap: React.FC<KsrMapProps> = ({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gesture) =>
         Math.abs(gesture.dx) > 3 || Math.abs(gesture.dy) > 3,
-      onPanResponderGrant: (evt, _) => {
+      onPanResponderGrant: (evt) => {
         const { pageX, pageY } = evt.nativeEvent;
         dragStartRef.current = {
           x: pageX,
@@ -218,7 +216,7 @@ export const KsrMap: React.FC<KsrMapProps> = ({
     return routeCoordinates.map((c) => `${c.x},${c.y}`).join(' ');
   }, [routeCoordinates]);
 
-  // Marker visibility based on zoom level to prevent clutter (Section 25)
+  // Marker visibility based on zoom level to prevent clutter
   const isDetailedZoom = zoomLevel >= 1.25;
 
   return (
@@ -239,21 +237,23 @@ export const KsrMap: React.FC<KsrMapProps> = ({
         </View>
       </View>
 
-      {/* Mode Guidance Alert (Section 12 & 13) */}
+      {/* Mode Guidance Alert */}
       {selectionMode !== 'none' && (
         <View style={styles.selectionModeBanner}>
           <View style={styles.selectionModeLeft}>
-            <Text style={styles.selectionModeIcon}>
-              {selectionMode === 'source' ? '📍' : '🎯'}
-            </Text>
+            <View style={styles.modeIconWrapper}>
+              <Text style={styles.selectionModeIcon}>
+                {selectionMode === 'source' ? '📍' : '🎯'}
+              </Text>
+            </View>
             <View>
               <Text style={styles.selectionModeTitle}>
                 {selectionMode === 'source' ? 'SELECT STARTING POINT' : 'SELECT DESTINATION'}
               </Text>
               <Text style={styles.selectionModeSub}>
                 {selectionMode === 'source'
-                  ? 'Tap your starting location on the KSR map.'
-                  : 'Tap your destination on the KSR map.'}
+                  ? 'Tap anywhere on the KSR map to anchor start.'
+                  : 'Tap a destination platform or facility on the map.'}
               </Text>
             </View>
           </View>
@@ -282,7 +282,7 @@ export const KsrMap: React.FC<KsrMapProps> = ({
           {/* 1. Underlying Base KSR CAD Map */}
           <BaseStationMap />
 
-          {/* 2. Interactive Overlay */}
+          {/* 2. Interactive Premium Overlay */}
           <Svg
             viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
             width="100%"
@@ -290,13 +290,13 @@ export const KsrMap: React.FC<KsrMapProps> = ({
             style={StyleSheet.absoluteFill}
           >
             <Defs>
-              <LinearGradient id="neonRouteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <Stop offset="0%" stopColor="#00E5FF" stopOpacity="1" />
-                <Stop offset="100%" stopColor="#3B82F6" stopOpacity="1" />
+              <LinearGradient id="goldRouteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor={Colors.goldPrimary} stopOpacity="1" />
+                <Stop offset="100%" stopColor={Colors.goldDark} stopOpacity="1" />
               </LinearGradient>
             </Defs>
 
-            {/* A. Blocked Path Overlay (Section 23) */}
+            {/* A. Blocked Path Overlay */}
             {Object.entries(blockageStatuses).map(([elemId, stat]) => {
               if (stat !== 'BLOCKED') return null;
               const fac = facilitiesData.find((f: any) => f.id === elemId);
@@ -307,15 +307,15 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                     cx={fac.coordinates.x}
                     cy={fac.coordinates.y}
                     r={isDetailedZoom ? 48 : 36}
-                    fill="rgba(239, 68, 68, 0.35)"
-                    stroke="#EF4444"
+                    fill={Colors.errorTint}
+                    stroke={Colors.error}
                     strokeWidth="4"
                     strokeDasharray="8,6"
                   />
                   <SvgText
                     x={fac.coordinates.x}
                     y={fac.coordinates.y + 10}
-                    fill="#EF4444"
+                    fill={Colors.error}
                     fontSize="28"
                     fontWeight="bold"
                     textAnchor="middle"
@@ -325,7 +325,7 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                   <SvgText
                     x={fac.coordinates.x}
                     y={fac.coordinates.y + 40}
-                    fill="#EF4444"
+                    fill={Colors.error}
                     fontSize="20"
                     fontWeight="800"
                     textAnchor="middle"
@@ -336,24 +336,24 @@ export const KsrMap: React.FC<KsrMapProps> = ({
               );
             })}
 
-            {/* B. Active Route Overlay (Section 18 & 22) */}
+            {/* B. Active Route Overlay (Gold & Dark Gold) */}
             {polylinePoints.length > 0 && (
               <G>
-                {/* Glow Shadow */}
+                {/* Glow & Ambient halo */}
                 <Polyline
                   points={polylinePoints}
                   fill="none"
-                  stroke="#00E5FF"
+                  stroke={Colors.goldLight}
                   strokeWidth="24"
-                  strokeOpacity="0.4"
+                  strokeOpacity="0.65"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* Core Neon Path */}
+                {/* Core Gold Path */}
                 <Polyline
                   points={polylinePoints}
                   fill="none"
-                  stroke="url(#neonRouteGrad)"
+                  stroke="url(#goldRouteGrad)"
                   strokeWidth="12"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -361,22 +361,23 @@ export const KsrMap: React.FC<KsrMapProps> = ({
               </G>
             )}
 
-            {/* C. Source Location Marker (Section 8) */}
+            {/* C. Source Location Marker (Charcoal + Gold Accent) */}
             {currentLocation && (
               <G>
                 <Circle
                   cx={currentLocation.x}
                   cy={currentLocation.y}
                   r="36"
-                  fill="rgba(16, 185, 129, 0.35)"
-                  stroke="#10B981"
+                  fill={Colors.goldTintMedium}
+                  stroke={Colors.charcoalPrimary}
                   strokeWidth="4"
                 />
-                <Circle cx={currentLocation.x} cy={currentLocation.y} r="18" fill="#10B981" />
+                <Circle cx={currentLocation.x} cy={currentLocation.y} r="18" fill={Colors.charcoalPrimary} />
+                <Circle cx={currentLocation.x} cy={currentLocation.y} r="8" fill={Colors.goldPrimary} />
                 <SvgText
                   x={currentLocation.x}
-                  y={currentLocation.y - 42}
-                  fill="#10B981"
+                  y={currentLocation.y - 44}
+                  fill={Colors.charcoalPrimary}
                   fontSize="26"
                   fontWeight="bold"
                   textAnchor="middle"
@@ -386,22 +387,23 @@ export const KsrMap: React.FC<KsrMapProps> = ({
               </G>
             )}
 
-            {/* D. Destination Location Marker */}
+            {/* D. Destination Location Marker (Gold / Dark Gold) */}
             {destinationLocation && (
               <G>
                 <Circle
                   cx={destinationLocation.x}
                   cy={destinationLocation.y}
                   r="36"
-                  fill="rgba(239, 68, 68, 0.35)"
-                  stroke="#EF4444"
+                  fill={Colors.goldTintMedium}
+                  stroke={Colors.goldPrimary}
                   strokeWidth="4"
                 />
-                <Circle cx={destinationLocation.x} cy={destinationLocation.y} r="18" fill="#EF4444" />
+                <Circle cx={destinationLocation.x} cy={destinationLocation.y} r="18" fill={Colors.goldPrimary} />
+                <Circle cx={destinationLocation.x} cy={destinationLocation.y} r="8" fill={Colors.charcoalPrimary} />
                 <SvgText
                   x={destinationLocation.x}
-                  y={destinationLocation.y - 42}
-                  fill="#EF4444"
+                  y={destinationLocation.y - 44}
+                  fill={Colors.goldDark}
                   fontSize="26"
                   fontWeight="bold"
                   textAnchor="middle"
@@ -411,7 +413,7 @@ export const KsrMap: React.FC<KsrMapProps> = ({
               </G>
             )}
 
-            {/* E. Interactive Platform Badges (Section 14 & 20) */}
+            {/* E. Interactive Platform Badges */}
             {platformsData.map((p) => {
               return (
                 <G key={p.id}>
@@ -420,16 +422,16 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                     cx={p.badgeLeft.x}
                     cy={p.badgeLeft.y}
                     r={isDetailedZoom ? 32 : 26}
-                    fill="#F59E0B"
-                    stroke="#FFFFFF"
-                    strokeWidth="4"
+                    fill={Colors.goldPrimary}
+                    stroke={Colors.bgPrimary}
+                    strokeWidth="3.5"
                     onPress={() => onSelectPlatform && onSelectPlatform(p)}
                   />
                   <SvgText
                     x={p.badgeLeft.x}
                     y={p.badgeLeft.y + 9}
-                    fill="#000000"
-                    fontSize="26"
+                    fill={Colors.textWhite}
+                    fontSize="24"
                     fontWeight="900"
                     textAnchor="middle"
                     onPress={() => onSelectPlatform && onSelectPlatform(p)}
@@ -442,16 +444,16 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                     cx={p.badgeRight.x}
                     cy={p.badgeRight.y}
                     r={isDetailedZoom ? 32 : 26}
-                    fill="#F59E0B"
-                    stroke="#FFFFFF"
-                    strokeWidth="4"
+                    fill={Colors.goldPrimary}
+                    stroke={Colors.bgPrimary}
+                    strokeWidth="3.5"
                     onPress={() => onSelectPlatform && onSelectPlatform(p)}
                   />
                   <SvgText
                     x={p.badgeRight.x}
                     y={p.badgeRight.y + 9}
-                    fill="#000000"
-                    fontSize="26"
+                    fill={Colors.textWhite}
+                    fontSize="24"
                     fontWeight="900"
                     textAnchor="middle"
                     onPress={() => onSelectPlatform && onSelectPlatform(p)}
@@ -463,10 +465,10 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                   <SvgText
                     x="1200"
                     y={p.center.y + 10}
-                    fill="#E2E8F0"
-                    fontSize="28"
+                    fill={Colors.textSecondary}
+                    fontSize="26"
                     fontWeight="bold"
-                    opacity={0.85}
+                    opacity={0.8}
                   >
                     PLATFORM {p.number}
                   </SvgText>
@@ -474,18 +476,18 @@ export const KsrMap: React.FC<KsrMapProps> = ({
               );
             })}
 
-            {/* F. Source-Backed Facility Markers (Section 20 & 25) */}
+            {/* F. Source-Backed Facility Markers */}
             {showFacilities &&
               facilitiesData.map((f: any) => {
                 const isBlocked = blockageStatuses[f.id] === 'BLOCKED';
                 const isCaution = blockageStatuses[f.id] === 'LIMITED';
-                const statusColor = isBlocked ? '#EF4444' : isCaution ? '#F97316' : '#10B981';
+                const statusColor = isBlocked ? Colors.error : isCaution ? Colors.warning : Colors.success;
 
                 const isLift = f.type === 'LIFT';
                 const isRamp = f.type === 'RAMP';
                 const isToilet = f.type === 'TOILET' || f.type === 'ACCESSIBLE_TOILET';
 
-                // Reduce density at zoomed out levels (Section 25)
+                // Reduce density at zoomed out levels
                 if (!isDetailedZoom && !isLift && !isRamp && f.type !== 'METRO_LINK') {
                   return null;
                 }
@@ -503,15 +505,15 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                       cx={f.coordinates.x}
                       cy={f.coordinates.y}
                       r={isDetailedZoom ? 26 : 22}
-                      fill="#0F172A"
+                      fill={Colors.bgPrimary}
                       stroke={statusColor}
-                      strokeWidth="3.5"
+                      strokeWidth="3"
                       onPress={() => onSelectFacility && onSelectFacility(f)}
                     />
                     <SvgText
                       x={f.coordinates.x}
                       y={f.coordinates.y + 7}
-                      fill="#FFFFFF"
+                      fill={Colors.textPrimary}
                       fontSize="18"
                       fontWeight="bold"
                       textAnchor="middle"
@@ -523,15 +525,15 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                 );
               })}
 
-            {/* G. Tap Target Crosshair Indicator */}
+            {/* G. Tap Target Crosshair Indicator (Gold) */}
             {cursorCoord && (
               <G>
                 <Circle
                   cx={cursorCoord.x}
                   cy={cursorCoord.y}
                   r="24"
-                  fill="rgba(56, 189, 248, 0.4)"
-                  stroke="#38BDF8"
+                  fill={Colors.goldTintMedium}
+                  stroke={Colors.goldPrimary}
                   strokeWidth="3"
                 />
                 <Line
@@ -539,7 +541,7 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                   y1={cursorCoord.y}
                   x2={cursorCoord.x + 36}
                   y2={cursorCoord.y}
-                  stroke="#38BDF8"
+                  stroke={Colors.goldPrimary}
                   strokeWidth="2.5"
                 />
                 <Line
@@ -547,7 +549,7 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                   y1={cursorCoord.y - 36}
                   x2={cursorCoord.x}
                   y2={cursorCoord.y + 36}
-                  stroke="#38BDF8"
+                  stroke={Colors.goldPrimary}
                   strokeWidth="2.5"
                 />
               </G>
@@ -555,7 +557,7 @@ export const KsrMap: React.FC<KsrMapProps> = ({
           </Svg>
         </View>
 
-        {/* Floating Map Controls (Section 7) */}
+        {/* Floating Map Controls (White Surfaces + Subtle Shadow) */}
         <View style={styles.floatingControls}>
           <TouchableOpacity style={styles.controlBtn} onPress={handleZoomIn} activeOpacity={0.8}>
             <Text style={styles.controlText}>+</Text>
@@ -580,23 +582,23 @@ export const KsrMap: React.FC<KsrMapProps> = ({
           )}
         </View>
 
-        {/* Compact Map Legend (Section 21) */}
+        {/* Compact Map Legend */}
         <View style={styles.legendBar}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+            <View style={[styles.legendDot, { backgroundColor: Colors.success }]} />
             <Text style={styles.legendText}>Open</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
+            <View style={[styles.legendDot, { backgroundColor: Colors.error }]} />
             <Text style={styles.legendText}>Blocked</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#00E5FF' }]} />
+            <View style={[styles.legendDot, { backgroundColor: Colors.goldPrimary }]} />
             <Text style={styles.legendText}>Route</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
-            <Text style={styles.legendText}>Platforms 1-10</Text>
+            <View style={[styles.legendDot, { backgroundColor: Colors.charcoalPrimary }]} />
+            <Text style={styles.legendText}>PF 1-10</Text>
           </View>
         </View>
       </View>
@@ -606,17 +608,14 @@ export const KsrMap: React.FC<KsrMapProps> = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#0F172A',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#334155',
-    marginHorizontal: 12,
-    marginVertical: 6,
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.hero,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginHorizontal: Spacing.sm,
+    marginVertical: Spacing.xs,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 }
+    ...Shadows.card
   },
   fullscreenContainer: {
     marginHorizontal: 0,
@@ -629,160 +628,177 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: Colors.bgSecondary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155'
+    borderBottomColor: Colors.border
   },
   titleInfo: {
     flex: 1
   },
   titleText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: '#F8FAFC',
-    letterSpacing: 0.8
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    letterSpacing: 0.6
   },
   cadBadge: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#38BDF8',
+    fontSize: 10,
+    fontWeight: '600',
+    color: Colors.textSecondary,
     marginTop: 2
   },
   topRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8
+    gap: Spacing.xs
   },
   fullscreenBtn: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: Colors.bgPrimary,
+    paddingHorizontal: Spacing.xs + 2,
+    paddingVertical: 5,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#38BDF8'
+    borderColor: Colors.border,
+    ...Shadows.sm
   },
   fullscreenBtnText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#38BDF8'
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   selectionModeBanner: {
-    backgroundColor: '#0284C7',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    backgroundColor: Colors.goldTintSolid,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.goldLight
   },
   selectionModeLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10
+    gap: Spacing.sm,
+    flex: 1
+  },
+  modeIconWrapper: {
+    width: 28,
+    height: 28,
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.bgPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.goldPrimary
   },
   selectionModeIcon: {
-    fontSize: 20
+    fontSize: 14
   },
   selectionModeTitle: {
     fontSize: 11,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.8
+    fontWeight: '700',
+    color: Colors.goldDark,
+    letterSpacing: 0.6
   },
   selectionModeSub: {
-    fontSize: 10,
-    color: '#E0F2FE',
+    fontSize: 11,
+    color: Colors.textSecondary,
     marginTop: 1
   },
   cancelSelectionBtn: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6
+    backgroundColor: Colors.bgPrimary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 5,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   cancelSelectionText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700'
+    color: Colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '600'
   },
   mapViewport: {
-    backgroundColor: '#070B13',
+    backgroundColor: Colors.mapBg,
     position: 'relative',
     overflow: 'hidden'
   },
   floatingControls: {
     position: 'absolute',
-    right: 12,
-    top: 12,
-    gap: 6,
+    right: Spacing.sm,
+    top: Spacing.sm,
+    gap: Spacing.xs - 2,
     alignItems: 'flex-end'
   },
   controlBtn: {
     width: 36,
     height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-    borderWidth: 1.5,
-    borderColor: '#334155',
+    borderRadius: Radii.md,
+    backgroundColor: Colors.bgPrimary,
+    borderWidth: 1,
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 4
+    ...Shadows.floating
   },
   controlText: {
-    color: '#F8FAFC',
+    color: Colors.textPrimary,
     fontSize: 18,
-    fontWeight: 'bold'
+    fontWeight: '600'
   },
   controlBtnTextual: {
-    paddingHorizontal: 8,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
-    borderWidth: 1.2,
-    borderColor: '#334155',
+    paddingHorizontal: Spacing.sm,
+    height: 32,
+    borderRadius: Radii.sm,
+    backgroundColor: Colors.bgPrimary,
+    borderWidth: 1,
+    borderColor: Colors.border,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    ...Shadows.sm
   },
   controlLabel: {
-    color: '#CBD5E1',
-    fontSize: 9,
-    fontWeight: '700'
+    color: Colors.textPrimary,
+    fontSize: 10,
+    fontWeight: '600'
   },
   controlBtnActive: {
-    paddingHorizontal: 8,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: 'rgba(2, 132, 199, 0.95)',
-    borderWidth: 1.2,
-    borderColor: '#38BDF8',
+    paddingHorizontal: Spacing.sm,
+    height: 32,
+    borderRadius: Radii.sm,
+    backgroundColor: Colors.goldPrimary,
+    borderWidth: 1,
+    borderColor: Colors.goldDark,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    ...Shadows.floating
   },
   controlLabelActive: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '800'
+    color: Colors.charcoalPrimary,
+    fontSize: 10,
+    fontWeight: '700'
   },
   legendBar: {
     position: 'absolute',
-    left: 10,
-    bottom: 8,
+    left: Spacing.sm,
+    bottom: Spacing.xs,
     flexDirection: 'row',
-    gap: 10,
-    backgroundColor: 'rgba(15, 23, 42, 0.82)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    gap: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 5,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border,
+    ...Shadows.sm
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4
+    gap: Spacing.xxs
   },
   legendDot: {
     width: 8,
@@ -790,8 +806,8 @@ const styles = StyleSheet.create({
     borderRadius: 4
   },
   legendText: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: '#CBD5E1'
+    fontSize: 10,
+    fontWeight: '500',
+    color: Colors.textSecondary
   }
 });

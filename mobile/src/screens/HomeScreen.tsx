@@ -20,8 +20,7 @@ import { NavigationBanner } from '../components/NavigationBanner';
 import { BlockageModal } from '../components/BlockageModal';
 import { useNavigationStore } from '../store/navigationStore';
 import { StationNode, localRouter, Coordinates } from '../services/localRouter';
-import platformsData from '../data/station/platforms.json';
-import facilitiesData from '../data/station/facilities.json';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 interface HomeScreenProps {
   onOpenAssistant: () => void;
@@ -95,7 +94,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // Start Map Selection Mode
   const handleStartMapSelection = (mode: 'source' | 'destination') => {
     setMapSelectionMode(mode);
-    // Scroll down to map
     scrollRef.current?.scrollToEnd({ animated: true });
   };
 
@@ -121,7 +119,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
-  // Handle Map Platform Tap (Section 14)
+  // Handle Map Platform Tap
   const handlePlatformTapped = (platform: any) => {
     const node = localRouter.nodeDict.get(`node_pf${platform.number}_center`) || localRouter.nodes[0];
     setTappedEntity({
@@ -135,7 +133,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     });
   };
 
-  // Handle Map Facility Tap (Section 14)
+  // Handle Map Facility Tap
   const handleFacilityTapped = (facility: any) => {
     const node = localRouter.nodeDict.get(`node_${facility.id}`) || localRouter.nodes[0];
     setTappedEntity({
@@ -150,7 +148,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     });
   };
 
-  // Quick action badges handler (Section 29)
+  // Quick action badges handler
   const handleQuickAction = (category: string) => {
     let targetNode: StationNode | undefined;
     if (category === 'LIFT') {
@@ -180,11 +178,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
+  // Handle primary "FIND ROUTE" action
+  const handleFindRoute = async () => {
+    if (!startNode && !destinationNode) {
+      handleOpenSearch('destination');
+      return;
+    }
+    if (!destinationNode) {
+      handleOpenSearch('destination');
+      return;
+    }
+    if (!startNode) {
+      handleOpenSearch('source');
+      return;
+    }
+    await calculateRoute();
+  };
+
   // Render Fullscreen Map Mode
   if (isFullscreenMap) {
     return (
       <SafeAreaView style={styles.fullscreenSafe}>
-        <StatusBar barStyle="light-content" backgroundColor="#0B1120" />
+        <StatusBar barStyle="dark-content" backgroundColor={Colors.bgPrimary} />
         <View style={styles.fullscreenHeader}>
           <TouchableOpacity onPress={() => setIsFullscreenMap(false)} style={styles.backBtn}>
             <Text style={styles.backBtnText}>← Back to Overview</Text>
@@ -227,32 +242,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#0B1120" />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.bgPrimary} />
 
-      {/* Top App Header */}
+      {/* 1. TOP HEADER */}
       <View style={styles.header}>
         <View>
-          <View style={styles.titleRow}>
-            <Text style={styles.titlePrefix}>RAIL</Text>
-            <Text style={styles.titleSuffix}>MARGA</Text>
-          </View>
-          <Text style={styles.tagline}>Smart & Accessible Navigation • KSR Bengaluru</Text>
+          <Text style={styles.brandTitle}>RAILMARGA</Text>
+          <Text style={styles.brandSub}>KSR Bengaluru</Text>
         </View>
 
         <View style={styles.headerRight}>
-          {/* Online/Offline indicator */}
+          {/* Online/Offline indicator pill */}
           <View style={[styles.statusPill, isOnline ? styles.statusOnline : styles.statusOffline]}>
-            <View style={[styles.statusDot, { backgroundColor: isOnline ? '#10B981' : '#F59E0B' }]} />
-            <Text style={styles.statusPillText}>{isOnline ? 'Online' : 'Offline Mode'}</Text>
+            <View style={[styles.statusDot, { backgroundColor: isOnline ? Colors.success : Colors.warning }]} />
+            <Text style={styles.statusPillText}>{isOnline ? 'Online' : 'Offline'}</Text>
           </View>
 
-          {/* Demo Sandbox Button */}
+          {/* Sandbox Demo Launcher */}
           <TouchableOpacity
             style={styles.demoPill}
             onPress={() => setDemoModalVisible(true)}
             activeOpacity={0.8}
           >
-            <Text style={styles.demoPillText}>⚡ Demo</Text>
+            <Text style={styles.demoPillText}>⚡ Conditions</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -262,7 +274,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Navigation Input Section (FROM / TO / SWAP) - Sections 8, 9, 32 */}
+        {/* 2. GREETING & MAIN SEARCH BAR */}
+        <View style={styles.searchSection}>
+          <Text style={styles.greetingText}>Where do you want to go?</Text>
+          <TouchableOpacity
+            style={styles.searchField}
+            onPress={() => handleOpenSearch('destination')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.searchFieldIcon}>🔎</Text>
+            <Text style={styles.searchFieldPlaceholder}>Search platform, facility or location</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 3. YOUR JOURNEY (SOURCE + DESTINATION CARD) */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionHeaderTitle}>YOUR JOURNEY</Text>
+        </View>
+
         <NavigationInputCard
           startNode={startNode}
           destinationNode={destinationNode}
@@ -278,16 +307,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onClearDestination={() => setDestinationNode(null)}
         />
 
-        {/* Accessibility Profile Selector - Sections 27 & 28 */}
+        {/* Primary Action Button: FIND ROUTE */}
+        <View style={styles.findRouteWrapper}>
+          <TouchableOpacity
+            style={styles.findRouteBtn}
+            onPress={handleFindRoute}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.findRouteBtnText}>FIND ROUTE</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 4. ACCESSIBILITY PROFILES */}
         <ProfilePicker
           selectedProfileId={selectedProfile}
           onSelectProfile={setProfile}
         />
 
-        {/* Quick Action Badges - Section 29 */}
-        <QuickActionBadges onSelectAction={handleQuickAction} />
-
-        {/* Route Preview Card (Appears when both FROM & TO are selected) - Sections 17 & 18 */}
+        {/* 5. ROUTE PREVIEW CARD (When route is ready) */}
         {activeRoute && !isNavigating && (
           <RoutePreviewCard
             route={activeRoute}
@@ -297,44 +334,55 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           />
         )}
 
-        {/* Original KSR CAD Vector Map Component - Hero Surface - Sections 2, 3, 5, 6, 7 */}
-        <KsrMap
-          routeCoordinates={activeRoute?.pathGeometry}
-          currentLocation={startNode?.coordinates}
-          destinationLocation={destinationNode?.coordinates}
-          onSelectPlatform={handlePlatformTapped}
-          onSelectFacility={handleFacilityTapped}
-          onSelectMapCoordinate={handleMapCoordinateSelected}
-          selectionMode={mapSelectionMode}
-          onCancelSelection={() => setMapSelectionMode('none')}
-          isFullscreen={false}
-          onToggleFullscreen={() => setIsFullscreenMap(true)}
-        />
+        {/* 6. HERO MAP CONTAINER */}
+        <View style={styles.mapSectionWrapper}>
+          <KsrMap
+            routeCoordinates={activeRoute?.pathGeometry}
+            currentLocation={startNode?.coordinates}
+            destinationLocation={destinationNode?.coordinates}
+            onSelectPlatform={handlePlatformTapped}
+            onSelectFacility={handleFacilityTapped}
+            onSelectMapCoordinate={handleMapCoordinateSelected}
+            selectionMode={mapSelectionMode}
+            onCancelSelection={() => setMapSelectionMode('none')}
+            isFullscreen={false}
+            onToggleFullscreen={() => setIsFullscreenMap(true)}
+          />
+        </View>
 
-        {/* Bottom AI Assistant & Facilities Quick Launch */}
+        {/* 7. QUICK FACILITIES */}
+        <QuickActionBadges onSelectAction={handleQuickAction} />
+
+        {/* 8. AI ASSISTANT & DIRECTORY TILES */}
         <View style={styles.actionCardsRow}>
           <TouchableOpacity
             style={styles.actionCard}
             onPress={onOpenAssistant}
             activeOpacity={0.85}
           >
-            <Text style={styles.actionCardIcon}>🤖</Text>
-            <View>
-              <Text style={styles.actionCardTitle}>Ask RailMarga AI</Text>
-              <Text style={styles.actionCardSub}>Station assistant</Text>
+            <View style={styles.actionCardIconBox}>
+              <Text style={styles.actionCardIcon}>💬</Text>
             </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.actionCardTitle}>Ask RailMarga</Text>
+              <Text style={styles.actionCardSub}>Station AI Assistant</Text>
+            </View>
+            <Text style={styles.actionCardArrow}>→</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionCard, styles.facilitiesCard]}
+            style={styles.actionCard}
             onPress={onOpenFacilities}
             activeOpacity={0.85}
           >
-            <Text style={styles.actionCardIcon}>🏢</Text>
-            <View>
-              <Text style={styles.actionCardTitle}>Station Directory</Text>
+            <View style={styles.actionCardIconBox}>
+              <Text style={styles.actionCardIcon}>🏢</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.actionCardTitle}>Directory</Text>
               <Text style={styles.actionCardSub}>Facilities & Lifts</Text>
             </View>
+            <Text style={styles.actionCardArrow}>→</Text>
           </TouchableOpacity>
         </View>
 
@@ -379,7 +427,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         }}
       />
 
-      {/* Judge Demo Sandbox Modal */}
+      {/* Station Conditions & Demo Sandbox Modal */}
       <BlockageModal
         visible={demoModalVisible}
         onClose={() => setDemoModalVisible(false)}
@@ -391,60 +439,49 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0B1120'
+    backgroundColor: Colors.bgSecondary
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#0F172A',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    backgroundColor: Colors.bgPrimary,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B'
+    borderBottomColor: Colors.border
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center'
+  brandTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    letterSpacing: 1.2
   },
-  titlePrefix: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#00E5FF',
-    letterSpacing: 1.5
-  },
-  titleSuffix: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#F8FAFC',
-    letterSpacing: 1.5
-  },
-  tagline: {
-    fontSize: 10,
-    color: '#64748B',
-    marginTop: 2,
+  brandSub: {
+    fontSize: 11,
+    color: Colors.textSecondary,
     fontWeight: '500'
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8
+    gap: Spacing.xs
   },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: Radii.pill,
     borderWidth: 1
   },
   statusOnline: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    borderColor: 'rgba(16, 185, 129, 0.3)'
+    backgroundColor: Colors.successLight,
+    borderColor: Colors.success
   },
   statusOffline: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    borderColor: 'rgba(245, 158, 11, 0.3)'
+    backgroundColor: Colors.warningLight,
+    borderColor: Colors.warning
   },
   statusDot: {
     width: 6,
@@ -455,57 +492,129 @@ const styles = StyleSheet.create({
   statusPillText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#CBD5E1'
+    color: Colors.textPrimary
   },
   demoPill: {
-    backgroundColor: 'rgba(168, 85, 247, 0.2)',
-    paddingHorizontal: 10,
+    backgroundColor: Colors.bgSecondary,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: Radii.pill,
     borderWidth: 1,
-    borderColor: '#A855F7'
+    borderColor: Colors.border
   },
   demoPillText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#C084FC'
+    fontWeight: '600',
+    color: Colors.textSecondary
   },
   scrollContent: {
-    paddingBottom: 20
+    paddingBottom: 24
+  },
+  searchSection: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xs
+  },
+  greetingText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: Spacing.xs
+  },
+  searchField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadows.sm
+  },
+  searchFieldIcon: {
+    fontSize: 16,
+    marginRight: Spacing.xs
+  },
+  searchFieldPlaceholder: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+    fontWeight: '400'
+  },
+  sectionHeaderRow: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
+    paddingBottom: 2
+  },
+  sectionHeaderTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    letterSpacing: 0.8
+  },
+  findRouteWrapper: {
+    paddingHorizontal: Spacing.sm,
+    marginVertical: Spacing.xs
+  },
+  findRouteBtn: {
+    backgroundColor: Colors.goldPrimary,
+    borderRadius: Radii.button,
+    paddingVertical: Spacing.sm + 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.floating
+  },
+  findRouteBtnText: {
+    color: Colors.charcoalPrimary,
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.8
+  },
+  mapSectionWrapper: {
+    marginVertical: Spacing.xs
   },
   actionCardsRow: {
     flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 12,
-    marginTop: 10
+    gap: Spacing.xs + 2,
+    paddingHorizontal: Spacing.sm,
+    marginTop: Spacing.sm
   },
   actionCard: {
     flex: 1,
-    backgroundColor: '#1E293B',
-    borderRadius: 14,
-    padding: 12,
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.md,
+    padding: Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: Spacing.xs,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border,
+    ...Shadows.sm
   },
-  facilitiesCard: {
-    borderColor: '#1E3A8A',
-    backgroundColor: 'rgba(30, 58, 138, 0.18)'
+  actionCardIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: Radii.sm,
+    backgroundColor: Colors.bgSecondary,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   actionCardIcon: {
-    fontSize: 22
+    fontSize: 16
   },
   actionCardTitle: {
-    color: '#F8FAFC',
+    color: Colors.textPrimary,
     fontSize: 13,
-    fontWeight: '700'
+    fontWeight: '600'
   },
   actionCardSub: {
-    color: '#64748B',
-    fontSize: 11,
+    color: Colors.textSecondary,
+    fontSize: 10,
     marginTop: 1
+  },
+  actionCardArrow: {
+    color: Colors.textTertiary,
+    fontSize: 14
   },
   bannerContainer: {
     position: 'absolute',
@@ -515,34 +624,34 @@ const styles = StyleSheet.create({
   },
   fullscreenSafe: {
     flex: 1,
-    backgroundColor: '#0B1120'
+    backgroundColor: Colors.bgPrimary
   },
   fullscreenHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#0F172A',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    backgroundColor: Colors.bgPrimary,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B'
+    borderBottomColor: Colors.border
   },
   backBtn: {
     padding: 4
   },
   backBtnText: {
-    color: '#38BDF8',
+    color: Colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '600'
+  },
+  fullscreenTitle: {
+    color: Colors.textPrimary,
     fontSize: 13,
     fontWeight: '700'
   },
-  fullscreenTitle: {
-    color: '#F8FAFC',
-    fontSize: 14,
-    fontWeight: '800'
-  },
   floatingRouteCard: {
     position: 'absolute',
-    bottom: 16,
+    bottom: Spacing.md,
     left: 0,
     right: 0
   }

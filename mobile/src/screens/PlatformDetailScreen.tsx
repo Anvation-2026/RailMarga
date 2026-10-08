@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { useNavigationStore } from '../store/navigationStore';
 import { localRouter } from '../services/localRouter';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 interface PlatformDetailScreenProps {
   platform: any;
@@ -54,7 +55,7 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
           <Text style={styles.sectionHeader}>Accessibility Information</Text>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Wheelchair Accessible:</Text>
-            <Text style={[styles.infoVal, { color: '#10B981' }]}>
+            <Text style={[styles.infoVal, { color: Colors.success }]}>
               {platform.accessibility?.wheelchairAccessible ? '✓ Yes (Step-free)' : '✗ Limited'}
             </Text>
           </View>
@@ -108,11 +109,11 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
           </View>
         </View>
 
-        {/* Buttons */}
+        {/* Action Buttons */}
         <View style={styles.btnRow}>
-          <View style={{ flexDirection: 'row', gap: 10, width: '100%', marginBottom: 10 }}>
+          <View style={{ flexDirection: 'row', gap: Spacing.xs, width: '100%', marginBottom: Spacing.xs }}>
             <TouchableOpacity
-              style={[styles.navigateBtn, { flex: 1, backgroundColor: '#0F172A', borderWidth: 1.5, borderColor: '#10B981' }]}
+              style={[styles.auxBtn, { flex: 1 }]}
               onPress={() => {
                 const node = localRouter.nodeDict.get(`node_pf${platform.number}_center`);
                 if (node) {
@@ -122,11 +123,11 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
               }}
               activeOpacity={0.8}
             >
-              <Text style={[styles.navigateBtnText, { color: '#10B981' }]}>📍 Set as Start</Text>
+              <Text style={styles.auxBtnText}>📍 Set as Start</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.navigateBtn, { flex: 1, backgroundColor: '#0F172A', borderWidth: 1.5, borderColor: '#38BDF8' }]}
+              style={[styles.auxBtn, { flex: 1 }]}
               onPress={() => {
                 const node = localRouter.nodeDict.get(`node_pf${platform.number}_center`);
                 if (node) {
@@ -136,24 +137,24 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
               }}
               activeOpacity={0.8}
             >
-              <Text style={[styles.navigateBtnText, { color: '#38BDF8' }]}>🎯 Set as Destination</Text>
+              <Text style={styles.auxBtnText}>🎯 Set as Dest</Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
             style={styles.navigateBtn}
             onPress={handleNavigate}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <Text style={styles.navigateBtnText}>🧭 Navigate to Platform {platform.number}</Text>
+            <Text style={styles.navigateBtnText}>START NAVIGATION</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.askBtn}
+            style={styles.assistantBtn}
             onPress={onAskAssistant}
             activeOpacity={0.8}
           >
-            <Text style={styles.askBtnText}>🤖 Ask RailMarga Assistant</Text>
+            <Text style={styles.assistantBtnText}>💬 Ask AI about Platform {platform.number}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -164,167 +165,177 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0B1120'
+    backgroundColor: Colors.bgSecondary
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    backgroundColor: Colors.bgPrimary,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B'
+    borderBottomColor: Colors.border
   },
   backBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: '#1E293B',
-    borderRadius: 8
+    paddingVertical: 4
   },
   backBtnText: {
-    color: '#38BDF8',
-    fontWeight: 'bold',
-    fontSize: 14
+    color: Colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '600'
   },
   headerTitle: {
-    color: '#F8FAFC',
-    fontSize: 18,
-    fontWeight: 'bold'
+    color: Colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700'
   },
   content: {
-    padding: 16
+    padding: Spacing.md,
+    gap: Spacing.sm
   },
   heroCard: {
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.lg,
+    padding: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    gap: Spacing.md,
     borderWidth: 1,
-    borderColor: '#334155',
-    gap: 14
+    borderColor: Colors.border,
+    ...Shadows.sm
   },
   badgeCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#F59E0B',
+    width: 50,
+    height: 50,
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.goldTintSolid,
+    borderWidth: 1.5,
+    borderColor: Colors.goldPrimary,
     justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF'
+    alignItems: 'center'
   },
   badgeNumber: {
-    color: '#000000',
-    fontSize: 26,
-    fontWeight: '900'
+    color: Colors.goldDark,
+    fontSize: 22,
+    fontWeight: '800'
   },
   platformTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4
+    color: Colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '700'
   },
   platformSub: {
-    color: '#94A3B8',
+    color: Colors.textSecondary,
     fontSize: 12,
-    lineHeight: 16
+    marginTop: 2
   },
   sectionCard: {
-    backgroundColor: '#1E293B',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.md,
+    padding: Spacing.md,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border,
+    ...Shadows.sm
   },
   sectionHeader: {
-    color: '#38BDF8',
+    color: Colors.textPrimary,
     fontSize: 13,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    marginBottom: 10
+    fontWeight: '700',
+    marginBottom: Spacing.xs
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6
+    paddingVertical: 4
   },
   infoLabel: {
-    color: '#94A3B8',
-    fontSize: 13
+    color: Colors.textSecondary,
+    fontSize: 12
   },
   infoVal: {
-    color: '#E2E8F0',
-    fontSize: 13,
+    color: Colors.textPrimary,
+    fontSize: 12,
     fontWeight: '600'
   },
   accessNotes: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    marginTop: 8,
+    color: Colors.textSecondary,
+    fontSize: 11,
+    marginTop: 6,
     fontStyle: 'italic'
   },
   groupTitle: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
+    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
     letterSpacing: 0.8,
-    marginBottom: 10
+    marginTop: 4
   },
   facilityItem: {
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.md,
+    padding: Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    gap: 12,
+    gap: Spacing.sm,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border
   },
   facilityIcon: {
-    fontSize: 22
+    fontSize: 20
   },
   facilityName: {
-    color: '#F8FAFC',
+    color: Colors.textPrimary,
     fontSize: 13,
-    fontWeight: 'bold'
+    fontWeight: '600'
   },
   facilityDetail: {
-    color: '#94A3B8',
-    fontSize: 11
+    color: Colors.textSecondary,
+    fontSize: 11,
+    marginTop: 1
   },
   btnRow: {
-    marginTop: 16,
-    gap: 10,
-    marginBottom: 30
+    marginTop: Spacing.xs,
+    gap: Spacing.xs
+  },
+  auxBtn: {
+    backgroundColor: Colors.bgPrimary,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.button,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  auxBtnText: {
+    color: Colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '600'
   },
   navigateBtn: {
-    backgroundColor: '#0284C7',
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: Colors.goldPrimary,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: Radii.button,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#38BDF8'
+    justifyContent: 'center',
+    ...Shadows.floating
   },
   navigateBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: 'bold'
+    color: Colors.charcoalPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.6
   },
-  askBtn: {
-    backgroundColor: '#1E293B',
-    paddingVertical: 12,
-    borderRadius: 12,
+  assistantBtn: {
+    backgroundColor: Colors.bgPrimary,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radii.button,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#475569'
+    borderColor: Colors.border
   },
-  askBtnText: {
-    color: '#E2E8F0',
-    fontSize: 14,
+  assistantBtnText: {
+    color: Colors.textPrimary,
+    fontSize: 12,
     fontWeight: '600'
   }
 });

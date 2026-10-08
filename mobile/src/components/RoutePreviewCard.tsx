@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { RouteResult } from '../services/localRouter';
+import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
 
 interface RoutePreviewCardProps {
   route: RouteResult;
@@ -17,8 +18,9 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
   onFitRoute,
   onClosePreview
 }) => {
-  const isWheelchair = selectedProfileId === 'mobility_disabled';
+  const [showExplanation, setShowExplanation] = useState(false);
   const isStepFree = route.accessibility.stepFree;
+  const isWheelchair = selectedProfileId === 'mobility_disabled';
 
   return (
     <View style={styles.card}>
@@ -30,11 +32,11 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
           </View>
           {isStepFree ? (
             <View style={styles.accessibleBadge}>
-              <Text style={styles.accessibleBadgeText}>✓ 100% Step-Free</Text>
+              <Text style={styles.accessibleBadgeText}>✓ Step-Free</Text>
             </View>
           ) : (
             <View style={styles.stairsBadge}>
-              <Text style={styles.stairsBadgeText}>⚠️ Contains Stairs</Text>
+              <Text style={styles.stairsBadgeText}>⚠ Contains Stairs</Text>
             </View>
           )}
         </View>
@@ -51,25 +53,35 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
         </View>
       </View>
 
+      {/* Destination & Key Metric */}
+      <View style={styles.destHeader}>
+        <Text style={styles.destTitle} numberOfLines={1}>
+          {route.destination.name}
+        </Text>
+        <Text style={styles.destSub}>
+          {route.estimatedTimeMinutes} min • {route.totalDistanceMeters}m
+        </Text>
+      </View>
+
       {/* Metrics Row */}
       <View style={styles.metricsRow}>
         <View style={styles.metricItem}>
           <Text style={styles.metricValue}>{route.totalDistanceMeters}m</Text>
-          <Text style={styles.metricLabel}>Total Distance</Text>
+          <Text style={styles.metricLabel}>Distance</Text>
         </View>
 
         <View style={styles.metricDivider} />
 
         <View style={styles.metricItem}>
           <Text style={styles.metricValue}>{route.estimatedTimeMinutes} min</Text>
-          <Text style={styles.metricLabel}>Estimated Time</Text>
+          <Text style={styles.metricLabel}>Est. Time</Text>
         </View>
 
         <View style={styles.metricDivider} />
 
         <View style={styles.metricItem}>
           <Text style={styles.metricValue}>{route.steps.length}</Text>
-          <Text style={styles.metricLabel}>Navigation Steps</Text>
+          <Text style={styles.metricLabel}>Steps</Text>
         </View>
       </View>
 
@@ -77,29 +89,55 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
       <View style={styles.verticalTransitionsRow}>
         {route.accessibility.liftsUsed.length > 0 && (
           <View style={styles.facilityPill}>
-            <Text style={styles.facilityPillText}>🛗 Lifts: {route.accessibility.liftsUsed.join(', ')}</Text>
+            <Text style={styles.facilityPillText}>🛗 Lift {route.accessibility.liftsUsed.join(', ')}</Text>
           </View>
         )}
         {route.accessibility.rampsUsed.length > 0 && (
           <View style={styles.facilityPill}>
-            <Text style={styles.facilityPillText}>↗️ Ramps: {route.accessibility.rampsUsed.join(', ')}</Text>
+            <Text style={styles.facilityPillText}>↗ Ramp {route.accessibility.rampsUsed.join(', ')}</Text>
           </View>
         )}
         {route.accessibility.stairsUsed.length > 0 && (
           <View style={[styles.facilityPill, styles.stairPill]}>
-            <Text style={[styles.facilityPillText, { color: '#FCA5A5' }]}>Stairs: {route.accessibility.stairsUsed.join(', ')}</Text>
+            <Text style={[styles.facilityPillText, { color: Colors.error }]}>Stairs: {route.accessibility.stairsUsed.join(', ')}</Text>
           </View>
         )}
       </View>
 
+      {/* Why This Route Explanation Accordion */}
+      <TouchableOpacity
+        style={styles.explanationHeader}
+        onPress={() => setShowExplanation(!showExplanation)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.explanationHeaderText}>
+          Why this route? {showExplanation ? '▲' : '▼'}
+        </Text>
+      </TouchableOpacity>
+
+      {showExplanation && (
+        <View style={styles.explanationBox}>
+          <Text style={styles.explanationItem}>
+            ✓ Tailored for {isWheelchair ? 'Mobility Disabled profile' : 'selected passenger profile'}
+          </Text>
+          <Text style={styles.explanationItem}>
+            {isStepFree ? '✓ 100% Step-free path selected' : '✓ Direct concourse corridor selected'}
+          </Text>
+          {route.accessibility.liftsUsed.length > 0 && (
+            <Text style={styles.explanationItem}>
+              ✓ Accessible elevator connection included
+            </Text>
+          )}
+        </View>
+      )}
+
       {/* Start Navigation CTA */}
       <TouchableOpacity
-        style={[styles.startNavBtn, isWheelchair && styles.startNavBtnWheelchair]}
+        style={styles.startNavBtn}
         onPress={onStartNavigation}
         activeOpacity={0.85}
       >
-        <Text style={styles.startNavIcon}>🧭</Text>
-        <Text style={styles.startNavText}>START TURN-BY-TURN GUIDANCE</Text>
+        <Text style={styles.startNavText}>START NAVIGATION</Text>
       </TouchableOpacity>
     </View>
   );
@@ -107,171 +145,191 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1E293B',
-    borderRadius: 16,
-    padding: 16,
-    marginHorizontal: 12,
-    marginVertical: 6,
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.lg,
+    padding: Spacing.md,
+    marginHorizontal: Spacing.sm,
+    marginVertical: Spacing.xs,
     borderWidth: 1.5,
-    borderColor: '#38BDF8',
-    shadowColor: '#38BDF8',
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 }
+    borderColor: Colors.goldPrimary,
+    ...Shadows.card
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12
+    marginBottom: Spacing.xs
   },
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8
+    gap: Spacing.xs
   },
   routePill: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: Colors.goldTintSolid,
+    paddingHorizontal: Spacing.xs + 2,
+    paddingVertical: 3,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#38BDF8'
+    borderColor: Colors.goldLight
   },
   routePillText: {
     fontSize: 10,
-    fontWeight: '800',
-    color: '#38BDF8',
-    letterSpacing: 0.8
+    fontWeight: '700',
+    color: Colors.goldDark,
+    letterSpacing: 0.6
   },
   accessibleBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: Colors.successLight,
+    paddingHorizontal: Spacing.xs + 2,
+    paddingVertical: 3,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#10B981'
+    borderColor: Colors.success
   },
   accessibleBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#10B981'
+    color: Colors.success
   },
   stairsBadge: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: Colors.warningLight,
+    paddingHorizontal: Spacing.xs + 2,
+    paddingVertical: 3,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#EF4444'
+    borderColor: Colors.warning
   },
   stairsBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#EF4444'
+    color: Colors.warning
   },
   topActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8
+    gap: Spacing.xs
   },
   fitBtn: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 8,
+    backgroundColor: Colors.bgSecondary,
+    paddingHorizontal: Spacing.xs + 2,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#475569'
+    borderColor: Colors.border
   },
   fitBtnText: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#CBD5E1'
+    fontWeight: '600',
+    color: Colors.textSecondary
   },
   closeBtn: {
     padding: 4
   },
   closeBtnText: {
-    color: '#94A3B8',
-    fontSize: 16,
-    fontWeight: 'bold'
+    color: Colors.textTertiary,
+    fontSize: 14,
+    fontWeight: '700'
+  },
+  destHeader: {
+    marginBottom: Spacing.sm
+  },
+  destTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary
+  },
+  destSub: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2
   },
   metricsRow: {
     flexDirection: 'row',
-    backgroundColor: '#0F172A',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     alignItems: 'center',
     justifyContent: 'space-around',
-    marginBottom: 10,
+    marginBottom: Spacing.sm,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border
   },
   metricItem: {
     alignItems: 'center'
   },
   metricValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F8FAFC'
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.textPrimary
   },
   metricLabel: {
     fontSize: 10,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2
   },
   metricDivider: {
     width: 1,
-    height: 24,
-    backgroundColor: '#334155'
+    height: 20,
+    backgroundColor: Colors.border
   },
   verticalTransitionsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 12
+    gap: Spacing.xs,
+    marginBottom: Spacing.xs + 2
   },
   facilityPill: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 8,
+    backgroundColor: Colors.bgSecondary,
+    paddingHorizontal: Spacing.xs + 2,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: '#334155'
+    borderColor: Colors.border
   },
   stairPill: {
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)'
+    borderColor: Colors.errorLight,
+    backgroundColor: Colors.errorLight
   },
   facilityPillText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#94A3B8'
+    color: Colors.textPrimary
+  },
+  explanationHeader: {
+    paddingVertical: 4,
+    marginBottom: 4
+  },
+  explanationHeaderText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.goldDark
+  },
+  explanationBox: {
+    backgroundColor: Colors.goldTintSolid,
+    padding: Spacing.sm,
+    borderRadius: Radii.sm,
+    marginBottom: Spacing.sm,
+    gap: 4
+  },
+  explanationItem: {
+    fontSize: 12,
+    color: Colors.charcoalPrimary,
+    lineHeight: 16
   },
   startNavBtn: {
-    backgroundColor: '#0284C7',
-    borderRadius: 12,
-    paddingVertical: 14,
-    flexDirection: 'row',
+    backgroundColor: Colors.goldPrimary,
+    borderRadius: Radii.button,
+    paddingVertical: Spacing.sm + 2,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#0284C7',
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 }
-  },
-  startNavBtnWheelchair: {
-    backgroundColor: '#0369A1'
-  },
-  startNavIcon: {
-    fontSize: 16
+    ...Shadows.floating
   },
   startNavText: {
-    color: '#FFFFFF',
+    color: Colors.charcoalPrimary,
     fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0.6
+    fontWeight: '700',
+    letterSpacing: 0.8
   }
 });
