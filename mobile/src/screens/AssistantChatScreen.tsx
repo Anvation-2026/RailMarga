@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -156,8 +157,12 @@ export const AssistantChatScreen: React.FC<AssistantChatScreenProps> = ({
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
         <View style={styles.headerTitleGroup}>
-          <Text style={styles.headerTitle}>ASK RAILMARGA</Text>
-          <Text style={styles.headerSub}>Your station navigation assistant</Text>
+          <Image
+            source={require('../../assets/railmarga-logo.png')}
+            style={{ width: 110, height: 32 }}
+            resizeMode="contain"
+          />
+          <Text style={styles.headerSub}>AI Navigation Assistant</Text>
         </View>
         <View style={{ width: 44 }} />
       </View>

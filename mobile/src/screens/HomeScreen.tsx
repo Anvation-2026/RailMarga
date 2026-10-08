@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -272,11 +273,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </View>
       ) : (
         <View style={styles.header}>
-          <View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.brandTitle}>RAIL</Text>
-              <Text style={[styles.brandTitle, { color: Colors.goldPrimary }]}>MARGA</Text>
-            </View>
+          <View style={styles.brandContainer}>
+            <Image
+              source={require('../../assets/railmarga-logo.png')}
+              style={styles.brandLogo}
+              resizeMode="contain"
+            />
             <Text style={styles.brandSub}>KSR Bengaluru</Text>
           </View>
 
@@ -497,16 +499,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.border
   },
-  brandTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.textPrimary,
-    letterSpacing: 1.2
+  brandContainer: {
+    justifyContent: 'center'
+  },
+  brandLogo: {
+    width: 120,
+    height: 38
   },
   brandSub: {
-    fontSize: 11,
+    fontSize: 10,
     color: Colors.textSecondary,
-    fontWeight: '500'
+    fontWeight: '600',
+    marginTop: -4,
+    marginLeft: 2
   },
   headerRight: {
     flexDirection: 'row',
