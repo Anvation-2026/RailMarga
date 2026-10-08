@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -72,6 +72,16 @@ export const KsrMap: React.FC<KsrMapProps> = ({
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [cursorCoord, setCursorCoord] = useState<Coordinates | null>(null);
+  const [dashOffset, setDashOffset] = useState<number>(0);
+
+  // Continuous animation loop for moving dashed line (marching ants effect)
+  useEffect(() => {
+    if (!routeCoordinates || routeCoordinates.length === 0) return;
+    const interval = setInterval(() => {
+      setDashOffset((prev) => (prev <= -76 ? 0 : prev - 2));
+    }, 45);
+    return () => clearInterval(interval);
+  }, [routeCoordinates]);
 
   const blockageStatuses = useBlockageStore((state) => state.statuses);
 
@@ -336,25 +346,46 @@ export const KsrMap: React.FC<KsrMapProps> = ({
               );
             })}
 
-            {/* B. Active Route Overlay (Gold & Dark Gold) */}
+            {/* B. Active Route Overlay (Continuously Moving Green Dashed Line) */}
             {polylinePoints.length > 0 && (
               <G>
-                {/* Glow & Ambient halo */}
+                {/* 1. Luminous Green Ambient Glow */}
                 <Polyline
                   points={polylinePoints}
                   fill="none"
-                  stroke={Colors.goldLight}
+                  stroke="rgba(16, 185, 129, 0.28)"
                   strokeWidth="24"
-                  strokeOpacity="0.65"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* Core Gold Path */}
+                {/* 2. Soft Green Guide Line */}
                 <Polyline
                   points={polylinePoints}
                   fill="none"
-                  stroke="url(#goldRouteGrad)"
+                  stroke="rgba(16, 185, 129, 0.35)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* 3. Main Emerald Green Dashed Moving Line */}
+                <Polyline
+                  points={polylinePoints}
+                  fill="none"
+                  stroke="#10B981"
                   strokeWidth="12"
+                  strokeDasharray="24,14"
+                  strokeDashoffset={dashOffset}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* 4. Bright Mint Moving Core Dash for Motion Depth */}
+                <Polyline
+                  points={polylinePoints}
+                  fill="none"
+                  stroke="#A7F3D0"
+                  strokeWidth="4"
+                  strokeDasharray="14,24"
+                  strokeDashoffset={dashOffset}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -593,8 +624,8 @@ export const KsrMap: React.FC<KsrMapProps> = ({
             <Text style={styles.legendText}>Blocked</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Colors.goldPrimary }]} />
-            <Text style={styles.legendText}>Route</Text>
+            <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+            <Text style={styles.legendText}>Route (Active)</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: Colors.charcoalPrimary }]} />
