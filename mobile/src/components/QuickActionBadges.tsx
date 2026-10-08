@@ -1,139 +1,154 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Colors, Radii, Spacing } from '../theme/tokens';
 import {
-  ElevatorIcon,
   RestroomIcon,
-  WheelchairIcon,
-  MetroIcon,
+  ElevatorIcon,
+  WaitingRoomIcon,
+  FoodIcon,
+  AtmIcon,
   TicketIcon,
-  MapPinIcon
+  CloakRoomIcon,
+  HelpDeskIcon
 } from './Icons';
 
 interface QuickActionBadgesProps {
   onSelectAction: (category: string) => void;
 }
 
-interface ActionCategory {
+interface AmenityTile {
   id: string;
   label: string;
-  sub: string;
-  iconType: 'lift' | 'restroom' | 'accessible_wc' | 'metro' | 'tickets' | 'entrance';
-  tintBg: string;
-  tintBorder: string;
+  icon: (color: string) => React.ReactNode;
 }
 
-const CATEGORIES: ActionCategory[] = [
-  { id: 'LIFT', label: 'Lifts & Elevators', sub: 'Step-Free', iconType: 'lift', tintBg: '#EFF6FF', tintBorder: '#BFDBFE' },
-  { id: 'TOILET', label: 'Restrooms', sub: 'All Concourses', iconType: 'restroom', tintBg: '#ECFDF5', tintBorder: '#A7F3D0' },
-  { id: 'ACCESSIBLE_TOILET', label: 'Divyangjan WC', sub: 'Wheelchair Spec', iconType: 'accessible_wc', tintBg: '#EFF6FF', tintBorder: '#BFDBFE' },
-  { id: 'METRO', label: 'Metro FOB Link', sub: 'Terminal 3', iconType: 'metro', tintBg: '#F5F3FF', tintBorder: '#DDD6FE' },
-  { id: 'TICKET_COUNTER', label: 'Tickets / PRS', sub: 'UTS & Booking', iconType: 'tickets', tintBg: '#FFFBEB', tintBorder: '#FDE68A' },
-  { id: 'ENTRANCE', label: 'Station Gates', sub: 'T1 / T2 / T3', iconType: 'entrance', tintBg: '#F8FAFC', tintBorder: '#E2E8F0' }
+const AMENITY_TILES: AmenityTile[] = [
+  {
+    id: 'TOILET',
+    label: 'Restroom',
+    icon: (color) => <RestroomIcon size={22} color={color} strokeWidth={1.75} />
+  },
+  {
+    id: 'LIFT',
+    label: 'Lift',
+    icon: (color) => <ElevatorIcon size={22} color={color} strokeWidth={1.75} />
+  },
+  {
+    id: 'WAITING_HALL',
+    label: 'Waiting room',
+    icon: (color) => <WaitingRoomIcon size={22} color={color} strokeWidth={1.75} />
+  },
+  {
+    id: 'FOOD',
+    label: 'Food',
+    icon: (color) => <FoodIcon size={22} color={color} strokeWidth={1.75} />
+  },
+  {
+    id: 'ATM',
+    label: 'ATM',
+    icon: (color) => <AtmIcon size={22} color={color} strokeWidth={1.75} />
+  },
+  {
+    id: 'TICKET_COUNTER',
+    label: 'Ticket counter',
+    icon: (color) => <TicketIcon size={22} color={color} strokeWidth={1.75} />
+  },
+  {
+    id: 'CLOAK_ROOM',
+    label: 'Cloak room',
+    icon: (color) => <CloakRoomIcon size={22} color={color} strokeWidth={1.75} />
+  },
+  {
+    id: 'HELP_DESK',
+    label: 'Help desk',
+    icon: (color) => <HelpDeskIcon size={22} color={color} strokeWidth={1.75} />
+  }
 ];
 
 export const QuickActionBadges: React.FC<QuickActionBadgesProps> = ({ onSelectAction }) => {
-  const renderIcon = (type: string) => {
-    switch (type) {
-      case 'lift': return <ElevatorIcon size={18} color="#2563EB" />;
-      case 'restroom': return <RestroomIcon size={18} color="#059669" />;
-      case 'accessible_wc': return <WheelchairIcon size={18} color="#2563EB" />;
-      case 'metro': return <MetroIcon size={18} color="#7C3AED" />;
-      case 'tickets': return <TicketIcon size={18} color="#D97706" />;
-      case 'entrance': return <MapPinIcon size={18} color="#334155" />;
-      default: return <MapPinIcon size={18} color="#2563EB" />;
-    }
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>ESSENTIAL STATION AMENITIES</Text>
-        <Text style={styles.subtitle}>Direct 1-tap navigation</Text>
+        <Text style={styles.sectionTitle}>Station amenities</Text>
+        <Text style={styles.sectionSub}>1-tap directions</Text>
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollList}
-      >
-        {CATEGORIES.map((cat) => (
+
+      {/* 4-Column Category Grid (Blinkit style) */}
+      <View style={styles.grid}>
+        {AMENITY_TILES.map((tile) => (
           <TouchableOpacity
-            key={cat.id}
-            style={styles.card}
-            onPress={() => onSelectAction(cat.id)}
+            key={tile.id}
+            style={styles.tile}
+            onPress={() => onSelectAction(tile.id)}
             activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel={`Navigate to ${tile.label}`}
           >
-            <View style={[styles.iconBox, { backgroundColor: cat.tintBg, borderColor: cat.tintBorder }]}>
-              {renderIcon(cat.iconType)}
+            <View style={styles.iconCircle}>
+              {tile.icon('#1A1A1A')}
             </View>
-            <Text style={styles.label}>{cat.label}</Text>
-            <Text style={styles.subText}>{cat.sub}</Text>
+            <Text style={styles.tileLabel} numberOfLines={1}>
+              {tile.label}
+            </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: Spacing.xs,
     width: '100%'
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
     paddingHorizontal: 2
   },
-  title: {
-    color: '#64748B',
-    fontSize: 11,
+  sectionTitle: {
+    fontSize: 15,
     fontWeight: '700',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase'
+    color: Colors.textPrimary
   },
-  subtitle: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '500'
+  sectionSub: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: Colors.textSecondary
   },
-  scrollList: {
+  grid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
-    paddingVertical: 2
+    justifyContent: 'space-between'
   },
-  card: {
+  tile: {
+    width: '23%', // 4 columns
+    minWidth: 72,
+    aspectRatio: 0.95,
     backgroundColor: '#FFFFFF',
-    borderRadius: Radii.md,
+    borderRadius: Radii.card, // 12px
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    borderColor: Colors.border,
     alignItems: 'center',
-    minWidth: 100,
-    ...Shadows.sm
+    justifyContent: 'center',
+    padding: 6
   },
-  iconBox: {
+  iconCircle: {
     width: 36,
     height: 36,
     borderRadius: 8,
-    borderWidth: 1,
+    backgroundColor: '#F8F8F5',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6
   },
-  label: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 2,
-    textAlign: 'center'
-  },
-  subText: {
-    fontSize: 10,
-    color: '#64748B',
+  tileLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textPrimary,
     textAlign: 'center'
   }
 });

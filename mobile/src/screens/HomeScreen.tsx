@@ -8,9 +8,7 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  Alert,
-  useWindowDimensions,
-  Platform
+  useWindowDimensions
 } from 'react-native';
 import { KsrMap } from '../components/KsrMap';
 import { NavigationInputCard } from '../components/NavigationInputCard';
@@ -23,17 +21,17 @@ import { NavigationBanner } from '../components/NavigationBanner';
 import { BlockageModal } from '../components/BlockageModal';
 import { useNavigationStore } from '../store/navigationStore';
 import { StationNode, localRouter, Coordinates } from '../services/localRouter';
-import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import { Colors, Radii, Spacing, Shadows } from '../theme/tokens';
 import {
+  BellIcon,
   CompassIcon,
   TrainIcon,
   SparkleIcon,
   QrIcon,
-  AlertIcon,
   ArrowRightIcon,
   FullscreenIcon,
-  CheckIcon,
-  LayersIcon
+  AlertIcon,
+  CloseIcon
 } from '../components/Icons';
 
 interface HomeScreenProps {
@@ -59,7 +57,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [demoModalVisible, setDemoModalVisible] = useState(false);
   const [tappedEntity, setTappedEntity] = useState<TappedEntity | null>(null);
   const [isFullscreenMap, setIsFullscreenMap] = useState(false);
-  const [selectedMapLevel, setSelectedMapLevel] = useState<number | 'all'>('all');
+  const [dismissAlertBanner, setDismissAlertBanner] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
 
@@ -107,7 +105,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         }
       }
       if (scrollRef.current) {
-        scrollRef.current.scrollTo({ y: isDesktop ? 180 : 460, animated: true });
+        scrollRef.current.scrollTo({ y: isDesktop ? 180 : 380, animated: true });
       }
     }, 120);
   };
@@ -187,7 +185,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       name: `Platform ${platform.number}`,
       level: 0,
       wheelchairAccessible: true,
-      details: `Track bed and passenger boarding surface for Platform ${platform.number}. Serves departures and arrivals.`,
+      details: `Platform ${platform.number} boarding area at KSR Bengaluru.`,
       node
     });
   };
@@ -201,23 +199,31 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       name: facility.name,
       level: facility.level,
       wheelchairAccessible: facility.wheelchairAccessible,
-      details: facility.description || `${facility.name} located at KSR Bengaluru Station.`,
+      details: facility.description || `${facility.name} at KSR Bengaluru.`,
       status: facility.status,
       node
     });
   };
 
-  // Quick action badges handler
+  // Quick action badges handler (4-column amenity grid)
   const handleQuickAction = async (category: string) => {
     let targetNode: StationNode | undefined;
     if (category === 'LIFT') {
       targetNode = localRouter.nodeDict.get('node_pf8_lift1') || localRouter.nodeDict.get('node_lift1');
     } else if (category === 'TOILET' || category === 'ACCESSIBLE_TOILET') {
       targetNode = localRouter.nodeDict.get('node_t1_toilet');
-    } else if (category === 'METRO') {
-      targetNode = localRouter.nodeDict.get('node_entry_t3_metro');
+    } else if (category === 'WAITING_HALL') {
+      targetNode = localRouter.nodeDict.get('node_entry_t1_main_east');
+    } else if (category === 'FOOD') {
+      targetNode = localRouter.nodeDict.get('node_entry_t1_main_east');
+    } else if (category === 'ATM') {
+      targetNode = localRouter.nodeDict.get('node_entry_t1_main_east');
     } else if (category === 'TICKET_COUNTER') {
       targetNode = localRouter.nodeDict.get('node_t1_ticket');
+    } else if (category === 'CLOAK_ROOM') {
+      targetNode = localRouter.nodeDict.get('node_entry_t1_main_east');
+    } else if (category === 'HELP_DESK') {
+      targetNode = localRouter.nodeDict.get('node_entry_t1_main_east');
     } else {
       targetNode = localRouter.nodeDict.get('node_entry_t1_main_east');
     }
@@ -235,7 +241,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
-  // Handle primary "GET ROUTE DIRECTIONS" action
+  // Handle primary "Find route" action
   const handleFindRoute = async () => {
     if (!destinationNode) {
       handleOpenSearch('destination');
@@ -261,12 +267,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <View style={styles.fullscreenHeader}>
           <TouchableOpacity onPress={() => setIsFullscreenMap(false)} style={styles.backBtn} activeOpacity={0.8}>
-            <Text style={styles.backBtnText}>← Return to Overview</Text>
+            <Text style={styles.backBtnText}>← Return to overview</Text>
           </TouchableOpacity>
-          <Text style={styles.fullscreenTitle}>KSR Bengaluru Vector Map</Text>
+          <Text style={styles.fullscreenTitle}>Station blueprint</Text>
           <TouchableOpacity onPress={() => setDemoModalVisible(true)} style={styles.alertPill} activeOpacity={0.8}>
-            <AlertIcon size={14} color="#D97706" />
-            <Text style={styles.alertPillText}>Simulate Alerts</Text>
+            <BellIcon size={16} color="#1A1A1A" />
+            <Text style={styles.alertPillText}>Alerts</Text>
           </TouchableOpacity>
         </View>
 
@@ -304,7 +310,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* TOP TRANSIT APP BAR */}
+      {/* TOP QUICK-COMMERCE STICKY APP BAR */}
       {isNavigating && activeRoute ? (
         <View style={styles.navHeader}>
           <TouchableOpacity
@@ -312,14 +318,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onPress={stopNavigation}
             activeOpacity={0.8}
           >
-            <Text style={styles.navHeaderBackText}>← Exit Guidance</Text>
+            <Text style={styles.navHeaderBackText}>← Exit</Text>
           </TouchableOpacity>
           <View style={styles.navHeaderInfo}>
             <Text style={styles.navHeaderDest} numberOfLines={1}>
-              Navigating to: {activeRoute.destination.name}
+              {activeRoute.destination.name}
             </Text>
             <Text style={styles.navHeaderStats}>
-              {activeRoute.estimatedTimeMinutes} min • {activeRoute.totalDistanceMeters}m • Step {currentStepIndex + 1}/{activeRoute.steps.length}
+              {activeRoute.estimatedTimeMinutes} min · {activeRoute.totalDistanceMeters}m · Step {currentStepIndex + 1}/{activeRoute.steps.length}
             </Text>
           </View>
           <TouchableOpacity
@@ -333,16 +339,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       ) : (
         <View style={styles.header}>
           <View style={styles.headerInner}>
-            {/* Left: Brand Identity */}
-            <View style={styles.brandContainer}>
+            {/* Left: Brand Identity + SBC Station Pill */}
+            <View style={styles.brandRow}>
               <Image
                 source={require('../../assets/railmarga-logo.png')}
                 style={styles.brandLogo}
                 resizeMode="contain"
               />
-              <View style={styles.stationBadge}>
-                <Text style={styles.stationBadgeCode}>SBC HUB</Text>
-                <Text style={styles.stationBadgeName}>KSR Bengaluru</Text>
+              <View style={styles.stationPill}>
+                <Text style={styles.stationPillText}>KSR Bengaluru · SBC</Text>
               </View>
             </View>
 
@@ -350,53 +355,72 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {isDesktop && (
               <View style={styles.desktopNavTabs}>
                 <View style={[styles.desktopTabItem, styles.desktopTabItemActive]}>
-                  <CompassIcon size={16} color="#2563EB" />
-                  <Text style={[styles.desktopTabLabel, styles.desktopTabLabelActive]}>Navigation & Map</Text>
+                  <CompassIcon size={16} color="#1A1A1A" strokeWidth={2} />
+                  <Text style={[styles.desktopTabLabel, styles.desktopTabLabelActive]}>Navigation</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.desktopTabItem}
                   onPress={onOpenFacilities}
                   activeOpacity={0.7}
                 >
-                  <TrainIcon size={16} color="#64748B" />
-                  <Text style={styles.desktopTabLabel}>Station Directory</Text>
+                  <TrainIcon size={16} color="#666660" strokeWidth={1.75} />
+                  <Text style={styles.desktopTabLabel}>Directory</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.desktopTabItem}
                   onPress={onOpenAssistant}
                   activeOpacity={0.7}
                 >
-                  <SparkleIcon size={16} color="#64748B" />
-                  <Text style={styles.desktopTabLabel}>AI Concierge</Text>
+                  <SparkleIcon size={16} color="#666660" strokeWidth={1.75} />
+                  <Text style={styles.desktopTabLabel}>Assistant</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.desktopTabItem}
                   onPress={onOpenQrScan}
                   activeOpacity={0.7}
                 >
-                  <QrIcon size={16} color="#64748B" />
-                  <Text style={styles.desktopTabLabel}>QR Checkpoint</Text>
+                  <QrIcon size={16} color="#666660" strokeWidth={1.75} />
+                  <Text style={styles.desktopTabLabel}>Scan QR</Text>
                 </TouchableOpacity>
               </View>
             )}
 
-            {/* Right: Engine Status & Demo Alerts */}
+            {/* Right: Alerts Bell with Red Dot & Online Status */}
             <View style={styles.headerRight}>
-              <View style={[styles.statusChip, isOnline ? styles.statusOnline : styles.statusOffline]}>
-                <View style={[styles.statusDot, { backgroundColor: isOnline ? '#10B981' : '#F59E0B' }]} />
-                <Text style={styles.statusText}>{isOnline ? 'Online Engine' : 'Offline Mode'}</Text>
+              <View style={styles.statusPill}>
+                <View style={[styles.statusDot, { backgroundColor: isOnline ? '#16A34A' : '#D97706' }]} />
+                <Text style={styles.statusPillText}>{isOnline ? 'Online' : 'Offline'}</Text>
               </View>
 
               <TouchableOpacity
-                style={styles.alertActionBtn}
+                style={styles.bellBtn}
                 onPress={() => setDemoModalVisible(true)}
-                activeOpacity={0.8}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel="Station alerts and simulation"
               >
-                <AlertIcon size={14} color="#D97706" />
-                <Text style={styles.alertActionText}>Simulate Alerts</Text>
+                <BellIcon size={20} color="#1A1A1A" strokeWidth={1.75} />
+                <View style={styles.redDot} />
               </TouchableOpacity>
             </View>
           </View>
+        </View>
+      )}
+
+      {/* Slim Blinkit-style Alert Notice Banner (Dismissible) */}
+      {blockageAlert && !dismissAlertBanner && (
+        <View style={styles.alertBanner}>
+          <AlertIcon size={16} color="#DC2626" strokeWidth={2} />
+          <Text style={styles.alertBannerText} numberOfLines={1}>
+            Lift 1 under maintenance. Accessible rerouting active.
+          </Text>
+          <TouchableOpacity
+            onPress={() => setDismissAlertBanner(true)}
+            style={styles.alertDismissBtn}
+            activeOpacity={0.7}
+          >
+            <CloseIcon size={14} color="#666660" />
+          </TouchableOpacity>
         </View>
       )}
 
@@ -405,18 +429,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={[styles.mainContainer, isDesktop && styles.desktopGrid]}>
+        <View style={[styles.mainLayout, isDesktop && styles.desktopLayout]}>
           {/* ======================================================== */}
-          {/* LEFT COLUMN: ROUTE PLANNER, PLATFORMS, PROFILES, RESULTS */}
+          {/* LEFT COLUMN: QUICK COMMERCE TRIP PLANNER & AMENITIES     */}
           {/* ======================================================== */}
           <View style={[styles.plannerColumn, isDesktop && styles.plannerColumnDesktop]}>
-            {/* Card 1: Journey Planner */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeaderRow}>
-                <Text style={styles.sectionMainTitle}>TRIP PLANNER</Text>
-                <Text style={styles.sectionSubTitle}>KSR Bengaluru (SBC)</Text>
-              </View>
-
+            {/* Card 1: Journey Search & Chips */}
+            <View style={styles.card}>
+              {/* Primary Search Bar */}
               <NavigationInputCard
                 startNode={startNode}
                 destinationNode={destinationNode}
@@ -432,16 +452,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 onClearDestination={() => setDestinationNode(null)}
               />
 
-              {/* Quick Platform Strip */}
-              <View style={styles.platformSection}>
-                <View style={styles.platformHeader}>
-                  <Text style={styles.platformLabel}>PLATFORMS (1-TAP ROUTE)</Text>
-                  <Text style={styles.platformTrackHint}>Tracks 1 to 10</Text>
+              {/* Horizontal Platform Chips (PF 1 to PF 10, min 44px tap target) */}
+              <View style={styles.platformsSection}>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={styles.sectionHeading}>Running late? Tap your platform</Text>
+                  <Text style={styles.sectionHint}>PF 1 – 10</Text>
                 </View>
+
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.platformChipsScroll}
+                  contentContainerStyle={styles.platformChipsRow}
                 >
                   {PLATFORMS_LIST.map((pfNum) => {
                     const isSelected = destinationNode?.name.includes(`Platform ${pfNum}`);
@@ -451,6 +472,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         style={[styles.platformChip, isSelected && styles.platformChipActive]}
                         onPress={() => handleQuickPlatformSelect(pfNum)}
                         activeOpacity={0.75}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Select Platform ${pfNum}`}
                       >
                         <Text style={[styles.platformChipText, isSelected && styles.platformChipTextActive]}>
                           PF {pfNum}
@@ -461,7 +484,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </ScrollView>
               </View>
 
-              {/* Accessibility & Travel Profiles */}
+              {/* Accessibility Segmented Pills */}
               <ProfilePicker
                 selectedProfileId={selectedProfile}
                 onSelectProfile={(p) => {
@@ -472,36 +495,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 }}
               />
 
-              {/* Primary CTA: GET ROUTE DIRECTIONS */}
+              {/* Primary Golden Yellow CTA */}
               <TouchableOpacity
-                style={styles.getRouteBtn}
+                style={styles.findRouteBtn}
                 onPress={handleFindRoute}
                 activeOpacity={0.85}
+                accessibilityRole="button"
               >
-                <Text style={styles.getRouteBtnText}>
-                  {destinationNode ? 'GET ROUTE DIRECTIONS' : 'FIND OPTIMAL ROUTE'}
+                <Text style={styles.findRouteText}>
+                  {destinationNode ? 'Get directions' : 'Find route'}
                 </Text>
-                <ArrowRightIcon size={18} color="#FFFFFF" strokeWidth={2.5} />
+                <ArrowRightIcon size={18} color="#1A1A1A" strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
             {/* Route Results & Turn Guidance Card */}
             {activeRoute && !isNavigating && (
-              <View nativeID="route-results-section" style={styles.resultsCardWrapper}>
-                <View style={styles.routeResultsHeaderRow}>
-                  <Text style={styles.routeResultsTitle}>COMPUTED INDOOR ROUTE</Text>
-                  <TouchableOpacity
-                    style={styles.clearRouteBtn}
-                    onPress={() => {
-                      setStartNode(null);
-                      setDestinationNode(null);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.clearRouteBtnText}>Clear Route</Text>
-                  </TouchableOpacity>
-                </View>
-
+              <View nativeID="route-results-section" style={{ width: '100%' }}>
                 <RoutePreviewCard
                   route={activeRoute}
                   selectedProfileId={selectedProfile}
@@ -515,14 +525,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
             )}
 
-            {/* Essential Amenities Bar */}
-            <View style={styles.sectionCard}>
+            {/* Essential Amenities Grid (4-Column Blinkit Category Tiles) */}
+            <View style={styles.card}>
               <QuickActionBadges onSelectAction={handleQuickAction} />
             </View>
           </View>
 
           {/* ======================================================== */}
-          {/* RIGHT COLUMN: INTERACTIVE CAD MAP & LIVE STATION STATUS  */}
+          {/* RIGHT COLUMN: INTERACTIVE CAD MAP & STATION BLUEPRINT    */}
           {/* ======================================================== */}
           <View
             nativeID="map-card-section"
@@ -530,22 +540,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           >
             {/* Map Container Card */}
             <View style={styles.mapCard}>
-              {/* Map Header */}
-              <View style={styles.mapHeaderRow}>
+              <View style={styles.mapCardHeader}>
                 <View>
-                  <Text style={styles.mapTitle}>STATION VECTOR BLUEPRINT</Text>
-                  <Text style={styles.mapSub}>Original CAD Geometry • SBC Layout</Text>
+                  <Text style={styles.mapCardTitle}>Station blueprint</Text>
+                  <Text style={styles.mapCardSub}>Interactive indoor layout</Text>
                 </View>
-                <View style={styles.mapHeaderActions}>
-                  <TouchableOpacity
-                    style={styles.fullscreenToggleBtn}
-                    onPress={() => setIsFullscreenMap(true)}
-                    activeOpacity={0.8}
-                  >
-                    <FullscreenIcon size={14} color="#2563EB" />
-                    <Text style={styles.fullscreenToggleText}>Fullscreen</Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  style={styles.fullscreenBtn}
+                  onPress={() => setIsFullscreenMap(true)}
+                  activeOpacity={0.8}
+                  accessibilityLabel="Toggle fullscreen map"
+                >
+                  <FullscreenIcon size={14} color="#1A1A1A" strokeWidth={2} />
+                  <Text style={styles.fullscreenBtnText}>Fullscreen</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Interactive Vector Map */}
@@ -563,44 +571,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               />
             </View>
 
-            {/* Station Concierge Quick Cards (Mobile & Desktop) */}
+            {/* Quick Action Tiles for Assistant & Directory */}
             <View style={styles.conciergeCardsRow}>
               <TouchableOpacity
-                style={styles.conciergeCard}
+                style={styles.quickNavTile}
                 onPress={onOpenAssistant}
                 activeOpacity={0.85}
               >
-                <View style={styles.conciergeIconBox}>
-                  <SparkleIcon size={20} color="#2563EB" />
+                <View style={styles.quickNavIconBox}>
+                  <SparkleIcon size={18} color="#1A1A1A" strokeWidth={1.75} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.conciergeTag}>GROUNDED AI</Text>
-                  <Text style={styles.conciergeTitle}>Ask Station Assistant</Text>
-                  <Text style={styles.conciergeSub}>Gates, lifts, trains & directions</Text>
+                  <Text style={styles.quickNavTitle}>Ask assistant</Text>
+                  <Text style={styles.quickNavSub}>Platforms, lifts & trains</Text>
                 </View>
-                <Text style={styles.conciergeArrow}>→</Text>
+                <Text style={styles.quickNavArrow}>→</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.conciergeCard}
+                style={styles.quickNavTile}
                 onPress={onOpenFacilities}
                 activeOpacity={0.85}
               >
-                <View style={[styles.conciergeIconBox, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' }]}>
-                  <TrainIcon size={20} color="#059669" />
+                <View style={[styles.quickNavIconBox, { backgroundColor: '#EAF7EE' }]}>
+                  <TrainIcon size={18} color="#16A34A" strokeWidth={1.75} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.conciergeTag, { color: '#059669' }]}>42 AMENITIES</Text>
-                  <Text style={styles.conciergeTitle}>Station Directory</Text>
-                  <Text style={styles.conciergeSub}>Lifts, waiting halls & restrooms</Text>
+                  <Text style={styles.quickNavTitle}>Station directory</Text>
+                  <Text style={styles.quickNavSub}>42 amenities at SBC</Text>
                 </View>
-                <Text style={styles.conciergeArrow}>→</Text>
+                <Text style={styles.quickNavArrow}>→</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        <View style={{ height: isNavigating ? 260 : 60 }} />
+        <View style={{ height: isNavigating ? 260 : 70 }} />
       </ScrollView>
 
       {/* Turn-by-Turn Navigation Overlay Banner */}
@@ -658,55 +664,54 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC'
+    backgroundColor: Colors.bgPrimary // #F5F5F2
   },
   header: {
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: Colors.border,
     paddingHorizontal: Spacing.md,
     paddingVertical: 10
   },
   headerInner: {
-    maxWidth: 1280,
-    width: '100%',
-    alignSelf: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  brandContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12
+    justifyContent: 'space-between',
+    maxWidth: 1400,
+    width: '100%',
+    alignSelf: 'center'
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
   },
   brandLogo: {
-    width: 104,
-    height: 32
+    width: 28,
+    height: 28
   },
-  stationBadge: {
-    borderLeftWidth: 1,
-    borderLeftColor: '#E2E8F0',
-    paddingLeft: 10
+  stationPill: {
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radii.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 4
   },
-  stationBadgeCode: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#2563EB',
-    letterSpacing: 0.5
-  },
-  stationBadgeName: {
+  stationPillText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0F172A'
+    color: Colors.textPrimary
   },
   desktopNavTabs: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#F1F5F9',
-    padding: 4,
-    borderRadius: Radii.pill
+    backgroundColor: '#FAFAF7',
+    borderRadius: Radii.pill,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   desktopTabItem: {
     flexDirection: 'row',
@@ -717,16 +722,15 @@ const styles = StyleSheet.create({
     borderRadius: Radii.pill
   },
   desktopTabItemActive: {
-    backgroundColor: '#FFFFFF',
-    ...Shadows.sm
+    backgroundColor: Colors.primary // Hero Golden Yellow
   },
   desktopTabLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#64748B'
+    color: Colors.textSecondary
   },
   desktopTabLabelActive: {
-    color: '#2563EB',
+    color: '#1A1A1A',
     fontWeight: '700'
   },
   headerRight: {
@@ -734,334 +738,291 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8
   },
-  statusChip: {
+  statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 5,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border,
     borderRadius: Radii.pill,
-    backgroundColor: '#F1F5F9'
-  },
-  statusOnline: {
-    backgroundColor: '#ECFDF5'
-  },
-  statusOffline: {
-    backgroundColor: '#FFFBEB'
+    paddingHorizontal: 8,
+    paddingVertical: 4
   },
   statusDot: {
     width: 6,
     height: 6,
     borderRadius: 3
   },
-  statusText: {
+  statusPillText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#334155'
+    color: Colors.textSecondary
   },
-  alertActionBtn: {
+  bellBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative'
+  },
+  redDot: {
+    position: 'absolute',
+    top: 6,
+    right: 7,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: Colors.error
+  },
+  alertBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FEF2F2',
+    borderBottomWidth: 1,
+    borderBottomColor: '#FEE2E2',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8
+  },
+  alertBannerText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#DC2626'
+  },
+  alertDismissBtn: {
+    padding: 4
+  },
+  scrollContent: {
+    padding: Spacing.md
+  },
+  mainLayout: {
+    width: '100%',
+    maxWidth: 1400,
+    alignSelf: 'center',
+    flexDirection: 'column',
+    gap: Spacing.md
+  },
+  desktopLayout: {
+    flexDirection: 'row',
+    alignItems: 'flex-start'
+  },
+  plannerColumn: {
+    width: '100%',
+    gap: Spacing.md
+  },
+  plannerColumnDesktop: {
+    width: 440,
+    flexShrink: 0
+  },
+  mapColumn: {
+    width: '100%',
+    gap: Spacing.md
+  },
+  mapColumnDesktop: {
+    flex: 1
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.card, // 12px
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md
+  },
+  platformsSection: {
+    marginVertical: Spacing.xs
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+    paddingHorizontal: 2
+  },
+  sectionHeading: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary
+  },
+  sectionHint: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: Colors.textTertiary
+  },
+  platformChipsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 2
+  },
+  platformChip: {
+    height: 44, // Minimum 44px tap target
+    minWidth: 54,
+    paddingHorizontal: 12,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  platformChipActive: {
+    backgroundColor: Colors.primary, // Hero Golden Yellow
+    borderColor: Colors.primary
+  },
+  platformChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textPrimary
+  },
+  platformChipTextActive: {
+    color: '#1A1A1A',
+    fontWeight: '800'
+  },
+  findRouteBtn: {
+    height: 48,
+    backgroundColor: Colors.primary, // Hero Golden Yellow
+    borderRadius: Radii.pill, // 999px
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: Spacing.sm
+  },
+  findRouteText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1A1A1A'
+  },
+  mapCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md
+  },
+  mapCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm
+  },
+  mapCardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.textPrimary
+  },
+  mapCardSub: {
+    fontSize: 12,
+    color: Colors.textSecondary
+  },
+  fullscreenBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: Radii.pill,
-    backgroundColor: '#FFFBEB',
+    backgroundColor: '#FAFAF7',
     borderWidth: 1,
-    borderColor: '#FDE68A'
+    borderColor: Colors.border
   },
-  alertActionText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#D97706'
-  },
-  scrollContent: {
-    paddingVertical: 16,
-    paddingHorizontal: Spacing.sm
-  },
-  mainContainer: {
-    maxWidth: 1280,
-    width: '100%',
-    alignSelf: 'center'
-  },
-  desktopGrid: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 20
-  },
-  plannerColumn: {
-    width: '100%'
-  },
-  plannerColumnDesktop: {
-    width: 480
-  },
-  mapColumn: {
-    width: '100%',
-    marginTop: 16
-  },
-  mapColumnDesktop: {
-    flex: 1,
-    marginTop: 0
-  },
-  sectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: Radii.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 16,
-    ...Shadows.sm
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12
-  },
-  sectionMainTitle: {
+  fullscreenBtnText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: '#64748B',
-    letterSpacing: 0.8
-  },
-  sectionSubTitle: {
-    fontSize: 11,
     fontWeight: '600',
-    color: '#94A3B8'
-  },
-  platformSection: {
-    marginTop: 12,
-    marginBottom: 8
-  },
-  platformHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6
-  },
-  platformLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#64748B',
-    letterSpacing: 0.5
-  },
-  platformTrackHint: {
-    fontSize: 10,
-    color: '#94A3B8'
-  },
-  platformChipsScroll: {
-    flexDirection: 'row',
-    gap: 6,
-    paddingVertical: 2
-  },
-  platformChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: Radii.sm,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  platformChipActive: {
-    backgroundColor: '#2563EB',
-    borderColor: '#1D4ED8'
-  },
-  platformChipText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#334155'
-  },
-  platformChipTextActive: {
-    color: '#FFFFFF'
-  },
-  getRouteBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#2563EB',
-    borderRadius: Radii.md,
-    paddingVertical: 14,
-    marginTop: 12,
-    ...Shadows.sm
-  },
-  getRouteBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.5
-  },
-  resultsCardWrapper: {
-    marginBottom: 16
-  },
-  routeResultsHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-    paddingHorizontal: 4
-  },
-  routeResultsTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#2563EB',
-    letterSpacing: 0.6
-  },
-  clearRouteBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 2
-  },
-  clearRouteBtnText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B'
-  },
-  mapCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: Radii.lg,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    overflow: 'hidden',
-    ...Shadows.sm,
-    marginBottom: 16
-  },
-  mapHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9'
-  },
-  mapTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: 0.6
-  },
-  mapSub: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 1
-  },
-  mapHeaderActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8
-  },
-  fullscreenToggleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radii.sm,
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#BFDBFE'
-  },
-  fullscreenToggleText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#2563EB'
+    color: Colors.textPrimary
   },
   conciergeCardsRow: {
     flexDirection: 'row',
     gap: 12
   },
-  conciergeCard: {
+  quickNavTile: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     backgroundColor: '#FFFFFF',
-    borderRadius: Radii.md,
-    padding: 12,
+    borderRadius: Radii.card,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...Shadows.sm
+    borderColor: Colors.border,
+    padding: 12
   },
-  conciergeIconBox: {
+  quickNavIconBox: {
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#FAFAF7',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center'
   },
-  conciergeTag: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#2563EB',
-    letterSpacing: 0.5
-  },
-  conciergeTitle: {
-    fontSize: 12,
+  quickNavTitle: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: Colors.textPrimary
+  },
+  quickNavSub: {
+    fontSize: 11,
+    color: Colors.textSecondary,
     marginTop: 1
   },
-  conciergeSub: {
-    fontSize: 10,
-    color: '#64748B'
-  },
-  conciergeArrow: {
+  quickNavArrow: {
     fontSize: 14,
-    color: '#94A3B8',
-    fontWeight: '700'
-  },
-  bannerContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 999
+    fontWeight: '700',
+    color: Colors.textSecondary
   },
   navHeader: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 16,
-    paddingVertical: 12
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    gap: 10
   },
   navHeaderBackBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: Radii.pill,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   navHeaderBackText: {
-    color: '#94A3B8',
     fontSize: 12,
-    fontWeight: '600'
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   navHeaderInfo: {
-    flex: 1,
-    alignItems: 'center'
+    flex: 1
   },
   navHeaderDest: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700'
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.textPrimary
   },
   navHeaderStats: {
-    color: '#38BDF8',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 1
+    fontSize: 12,
+    color: Colors.textSecondary
   },
   navHeaderExitBtn: {
-    backgroundColor: '#DC2626',
+    paddingVertical: 6,
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: Radii.sm
+    borderRadius: Radii.pill,
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FECACA'
   },
   navHeaderExitText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700'
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.error
   },
   fullscreenSafe: {
     flex: 1,
@@ -1071,47 +1032,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF'
+    borderBottomColor: Colors.border
   },
   backBtn: {
     paddingVertical: 4,
-    paddingHorizontal: 8
+    paddingHorizontal: 10,
+    borderRadius: Radii.pill,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   backBtnText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#2563EB'
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   fullscreenTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0F172A'
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.textPrimary
   },
   alertPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
     paddingVertical: 4,
+    paddingHorizontal: 10,
     borderRadius: Radii.pill,
-    backgroundColor: '#FFFBEB',
+    backgroundColor: '#FAFAF7',
     borderWidth: 1,
-    borderColor: '#FDE68A'
+    borderColor: Colors.border
   },
   alertPillText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#D97706'
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   floatingRouteCard: {
     position: 'absolute',
-    left: 16,
-    right: 16,
     bottom: 20,
-    zIndex: 99
+    left: 16,
+    right: 16
+  },
+  bannerContainer: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    right: 12
   }
 });

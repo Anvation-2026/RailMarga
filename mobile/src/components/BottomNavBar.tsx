@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import { Colors, Radii, Spacing, Shadows } from '../theme/tokens';
 import {
   CompassIcon,
   TrainIcon,
@@ -18,26 +18,26 @@ interface BottomNavBarProps {
 interface TabItem {
   key: TabKey;
   label: string;
-  iconType: 'compass' | 'train' | 'ai' | 'qr';
-  badge?: string;
+  iconType: 'home' | 'directory' | 'assistant' | 'qr';
 }
 
 const TABS: TabItem[] = [
-  { key: 'home', label: 'Navigation', iconType: 'compass' },
-  { key: 'facilities', label: 'Directory', iconType: 'train' },
-  { key: 'assistant', label: 'AI Concierge', iconType: 'ai', badge: 'AI' },
-  { key: 'qrScan', label: 'QR Scan', iconType: 'qr' }
+  { key: 'home', label: 'Home', iconType: 'home' },
+  { key: 'facilities', label: 'Directory', iconType: 'directory' },
+  { key: 'assistant', label: 'Assistant', iconType: 'assistant' },
+  { key: 'qrScan', label: 'Scan QR', iconType: 'qr' }
 ];
 
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeTab, onSelectTab }) => {
   const renderIcon = (type: string, isActive: boolean) => {
-    const color = isActive ? '#2563EB' : '#64748B';
+    const color = isActive ? '#1A1A1A' : '#73736C';
+    const strokeWidth = isActive ? 2.2 : 1.75;
     switch (type) {
-      case 'compass': return <CompassIcon size={20} color={color} />;
-      case 'train': return <TrainIcon size={20} color={color} />;
-      case 'ai': return <SparkleIcon size={20} color={color} />;
-      case 'qr': return <QrIcon size={20} color={color} />;
-      default: return <CompassIcon size={20} color={color} />;
+      case 'home': return <CompassIcon size={20} color={color} strokeWidth={strokeWidth} />;
+      case 'directory': return <TrainIcon size={20} color={color} strokeWidth={strokeWidth} />;
+      case 'assistant': return <SparkleIcon size={20} color={color} strokeWidth={strokeWidth} />;
+      case 'qr': return <QrIcon size={20} color={color} strokeWidth={strokeWidth} />;
+      default: return <CompassIcon size={20} color={color} strokeWidth={strokeWidth} />;
     }
   };
 
@@ -52,19 +52,16 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeTab, onSelectT
               style={[styles.tabButton, isActive && styles.tabButtonActive]}
               onPress={() => onSelectTab(tab.key)}
               activeOpacity={0.75}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={`${tab.label} tab`}
             >
               <View style={styles.iconWrapper}>
                 {renderIcon(tab.iconType, isActive)}
-                {tab.badge && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{tab.badge}</Text>
-                  </View>
-                )}
               </View>
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
                 {tab.label}
               </Text>
-              {isActive && <View style={styles.activeDot} />}
             </TouchableOpacity>
           );
         })}
@@ -77,9 +74,9 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+    borderTopColor: Colors.border,
+    paddingTop: 6,
+    paddingBottom: Platform.OS === 'ios' ? 22 : 8,
     ...Shadows.floating
   },
   bar: {
@@ -94,49 +91,27 @@ const styles = StyleSheet.create({
   tabButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 16,
-    borderRadius: Radii.md,
-    minWidth: 76
+    paddingVertical: 5,
+    paddingHorizontal: 14,
+    borderRadius: Radii.pill,
+    minWidth: 72,
+    minHeight: 44 // Min 44px tap target
   },
   tabButtonActive: {
-    backgroundColor: '#EFF6FF'
+    backgroundColor: Colors.primaryTintSolid // Subtle warm yellow wash
   },
   iconWrapper: {
-    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 3
-  },
-  badge: {
-    position: 'absolute',
-    top: -5,
-    right: -12,
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 6
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '800'
+    marginBottom: 2
   },
   tabLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
-    letterSpacing: 0.1
+    color: '#73736C'
   },
   tabLabelActive: {
-    color: '#1D4ED8',
+    color: '#1A1A1A',
     fontWeight: '700'
-  },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#2563EB',
-    marginTop: 3
   }
 });

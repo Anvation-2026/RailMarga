@@ -2,7 +2,15 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import { useNavigationStore } from '../store/navigationStore';
 import { localRouter } from '../services/localRouter';
-import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
+import { Colors, Radii, Spacing } from '../theme/tokens';
+import {
+  ElevatorIcon,
+  RampIcon,
+  RestroomIcon,
+  WheelchairIcon,
+  ArrowRightIcon,
+  CheckIcon
+} from '../components/Icons';
 
 interface PlatformDetailScreenProps {
   platform: any;
@@ -31,7 +39,7 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Platform {platform.number}</Text>
@@ -52,27 +60,32 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
 
         {/* Accessibility Status Card */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionHeader}>Accessibility Information</Text>
+          <Text style={styles.sectionHeader}>Accessibility</Text>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Wheelchair Accessible:</Text>
-            <Text style={[styles.infoVal, { color: Colors.success }]}>
-              {platform.accessibility?.wheelchairAccessible ? '✓ Yes (Step-free)' : '✗ Limited'}
-            </Text>
+            <Text style={styles.infoLabel}>Wheelchair access:</Text>
+            <View style={styles.statusPill}>
+              <CheckIcon size={12} color="#16A34A" strokeWidth={2.5} />
+              <Text style={styles.infoVal}>Step-free verified</Text>
+            </View>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Tactile Paving:</Text>
-            <Text style={styles.infoVal}>✓ Installed along platform edge</Text>
+            <Text style={styles.infoLabel}>Tactile paving:</Text>
+            <Text style={styles.infoValPlain}>Installed along platform edge</Text>
           </View>
-          <Text style={styles.accessNotes}>{platform.accessibility?.notes}</Text>
+          {platform.accessibility?.notes && (
+            <Text style={styles.accessNotes}>{platform.accessibility.notes}</Text>
+          )}
         </View>
 
         {/* Nearby Facilities Matrix */}
-        <Text style={styles.groupTitle}>Nearby Connected Facilities</Text>
+        <Text style={styles.groupTitle}>Nearby connected amenities</Text>
 
         <View style={styles.facilityItem}>
-          <Text style={styles.facilityIcon}>🛗</Text>
+          <View style={styles.facilityIconBox}>
+            <ElevatorIcon size={18} color="#1A1A1A" strokeWidth={1.75} />
+          </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.facilityName}>Nearest Lift</Text>
+            <Text style={styles.facilityName}>Nearest lift</Text>
             <Text style={styles.facilityDetail}>
               {platform.nearestLifts?.join(', ') || 'Connected via FOB 2'}
             </Text>
@@ -80,9 +93,11 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
         </View>
 
         <View style={styles.facilityItem}>
-          <Text style={styles.facilityIcon}>♿</Text>
+          <View style={styles.facilityIconBox}>
+            <RampIcon size={18} color="#1A1A1A" strokeWidth={1.75} />
+          </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.facilityName}>Nearest Ramp</Text>
+            <Text style={styles.facilityName}>Nearest ramp</Text>
             <Text style={styles.facilityDetail}>
               {platform.nearestRamps?.join(', ') || '1:12 Ramp to FOB 2'}
             </Text>
@@ -90,73 +105,34 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
         </View>
 
         <View style={styles.facilityItem}>
-          <Text style={styles.facilityIcon}>🚻</Text>
+          <View style={styles.facilityIconBox}>
+            <RestroomIcon size={18} color="#1A1A1A" strokeWidth={1.75} />
+          </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.facilityName}>Nearest Restroom</Text>
+            <Text style={styles.facilityName}>Nearest restroom</Text>
             <Text style={styles.facilityDetail}>
-              {platform.nearestToilets?.join(', ') || 'On-platform Restroom'}
+              {platform.nearestToilets?.join(', ') || 'On-platform concourse'}
             </Text>
           </View>
         </View>
 
-        <View style={styles.facilityItem}>
-          <Text style={styles.facilityIcon}>🌉</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.facilityName}>Footover Bridges</Text>
-            <Text style={styles.facilityDetail}>
-              FOB 1 (Mysuru End) & FOB 2 (Okkalpuram End - Lifts/Ramps)
-            </Text>
-          </View>
-        </View>
+        {/* Actions */}
+        <TouchableOpacity
+          style={styles.navigateBtn}
+          onPress={handleNavigate}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.navigateBtnText}>Navigate to Platform {platform.number}</Text>
+          <ArrowRightIcon size={18} color="#1A1A1A" strokeWidth={2.5} />
+        </TouchableOpacity>
 
-        {/* Action Buttons */}
-        <View style={styles.btnRow}>
-          <View style={{ flexDirection: 'row', gap: Spacing.xs, width: '100%', marginBottom: Spacing.xs }}>
-            <TouchableOpacity
-              style={[styles.auxBtn, { flex: 1 }]}
-              onPress={() => {
-                const node = localRouter.nodeDict.get(`node_pf${platform.number}_center`);
-                if (node) {
-                  useNavigationStore.getState().setStartNode(node, 'PLATFORM');
-                  onBack();
-                }
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.auxBtnText}>📍 Set as Start</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.auxBtn, { flex: 1 }]}
-              onPress={() => {
-                const node = localRouter.nodeDict.get(`node_pf${platform.number}_center`);
-                if (node) {
-                  useNavigationStore.getState().setDestinationNode(node, 'PLATFORM');
-                  onBack();
-                }
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.auxBtnText}>🎯 Set as Dest</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            style={styles.navigateBtn}
-            onPress={handleNavigate}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.navigateBtnText}>START NAVIGATION</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.assistantBtn}
-            onPress={onAskAssistant}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.assistantBtnText}>💬 Ask AI about Platform {platform.number}</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.assistantBtn}
+          onPress={onAskAssistant}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.assistantBtnText}>Ask assistant about Platform {platform.number}</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -165,177 +141,179 @@ export const PlatformDetailScreen: React.FC<PlatformDetailScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.bgSecondary
+    backgroundColor: Colors.bgPrimary
   },
   header: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
-    backgroundColor: Colors.bgPrimary,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border
+    paddingVertical: 12
   },
   backBtn: {
-    paddingVertical: 4
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: Radii.pill,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   backBtnText: {
-    color: Colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '600'
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   headerTitle: {
-    color: Colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700'
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary
   },
   content: {
     padding: Spacing.md,
     gap: Spacing.sm
   },
   heroCard: {
-    backgroundColor: Colors.bgPrimary,
-    borderRadius: Radii.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadows.sm
+    gap: 14
   },
   badgeCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: Radii.pill,
-    backgroundColor: Colors.goldTintSolid,
-    borderWidth: 1.5,
-    borderColor: Colors.goldPrimary,
-    justifyContent: 'center',
-    alignItems: 'center'
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: Colors.primary, // Hero Golden Yellow
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   badgeNumber: {
-    color: Colors.goldDark,
     fontSize: 22,
-    fontWeight: '800'
+    fontWeight: '800',
+    color: '#1A1A1A'
   },
   platformTitle: {
-    color: Colors.textPrimary,
-    fontSize: 18,
-    fontWeight: '700'
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary
   },
   platformSub: {
-    color: Colors.textSecondary,
     fontSize: 12,
+    color: Colors.textSecondary,
     marginTop: 2
   },
   sectionCard: {
-    backgroundColor: Colors.bgPrimary,
-    borderRadius: Radii.md,
-    padding: Spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.card,
     borderWidth: 1,
     borderColor: Colors.border,
-    ...Shadows.sm
+    padding: Spacing.md
   },
   sectionHeader: {
-    color: Colors.textPrimary,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
-    marginBottom: Spacing.xs
+    color: Colors.textPrimary,
+    marginBottom: 8
   },
   infoRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 4
   },
   infoLabel: {
-    color: Colors.textSecondary,
-    fontSize: 12
+    fontSize: 13,
+    color: Colors.textSecondary
   },
-  infoVal: {
-    color: Colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '600'
-  },
-  accessNotes: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    marginTop: 6,
-    fontStyle: 'italic'
-  },
-  groupTitle: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    marginTop: 4
-  },
-  facilityItem: {
-    backgroundColor: Colors.bgPrimary,
-    borderRadius: Radii.md,
-    padding: Spacing.sm,
+  statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border
+    gap: 4
   },
-  facilityIcon: {
-    fontSize: 20
-  },
-  facilityName: {
-    color: Colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '600'
-  },
-  facilityDetail: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    marginTop: 1
-  },
-  btnRow: {
-    marginTop: Spacing.xs,
-    gap: Spacing.xs
-  },
-  auxBtn: {
-    backgroundColor: Colors.bgPrimary,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radii.button,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border
-  },
-  auxBtnText: {
-    color: Colors.textPrimary,
+  infoVal: {
     fontSize: 12,
-    fontWeight: '600'
+    fontWeight: '600',
+    color: Colors.success
   },
-  navigateBtn: {
-    backgroundColor: Colors.goldPrimary,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: Radii.button,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.floating
+  infoValPlain: {
+    fontSize: 12,
+    color: Colors.textPrimary
   },
-  navigateBtnText: {
-    color: Colors.charcoalPrimary,
+  accessNotes: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 6,
+    lineHeight: 16
+  },
+  groupTitle: {
     fontSize: 14,
     fontWeight: '700',
-    letterSpacing: 0.6
+    color: Colors.textPrimary,
+    marginTop: 8
+  },
+  facilityItem: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
+  },
+  facilityIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  facilityName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textPrimary
+  },
+  facilityDetail: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 1
+  },
+  navigateBtn: {
+    backgroundColor: Colors.primary, // Hero Golden Yellow
+    borderRadius: Radii.pill,
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: Spacing.sm
+  },
+  navigateBtnText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1A1A1A'
   },
   assistantBtn: {
-    backgroundColor: Colors.bgPrimary,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radii.button,
-    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: Colors.border
+    borderColor: Colors.border,
+    borderRadius: Radii.pill,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   assistantBtnText: {
-    color: Colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '600'
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textPrimary
   }
 });

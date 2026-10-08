@@ -2,7 +2,13 @@ import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
 import { StationNode } from '../services/localRouter';
 import { useBlockageStore } from '../store/blockageStore';
-import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
+import { Colors, Radii, Spacing } from '../theme/tokens';
+import {
+  CloseIcon,
+  WheelchairIcon,
+  AlertIcon,
+  ArrowRightIcon
+} from './Icons';
 
 export interface TappedEntity {
   type: 'PLATFORM' | 'FACILITY' | 'NODE';
@@ -38,11 +44,8 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
   const isBlocked = currentStatus === 'BLOCKED';
   const isCaution = currentStatus === 'LIMITED';
 
-  const statusColor = isBlocked ? Colors.error : (isCaution ? Colors.warning : Colors.success);
-  const statusLabel = isBlocked ? '● BLOCKED / MAINTENANCE' : (isCaution ? '● LIMITED ACCESS' : '● OPERATIONAL');
-
   return (
-    <Modal visible={!!entity} animationType="fade" transparent onRequestClose={onClose}>
+    <Modal visible={!!entity} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheetContainer}>
           {/* Bottom Sheet Handle */}
@@ -54,35 +57,34 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
           <View style={styles.headerRow}>
             <View style={styles.titleGroup}>
               <Text style={styles.entityTypeLabel}>
-                {entity.type === 'PLATFORM' ? 'STATION PLATFORM' : (entity.type === 'FACILITY' ? 'STATION FACILITY' : 'NAVIGATION ANCHOR')}
+                {entity.type === 'PLATFORM' ? 'Platform' : (entity.type === 'FACILITY' ? 'Station amenity' : 'Location anchor')}
               </Text>
               <Text style={styles.entityName}>{entity.name}</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <TouchableOpacity onPress={onClose} style={styles.backBtn} activeOpacity={0.8}>
-                <Text style={styles.backBtnText}>← Back</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
-                <Text style={styles.closeText}>✕</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
+              <CloseIcon size={16} color="#666660" />
+            </TouchableOpacity>
           </View>
 
           {/* Status & Accessibility Tags */}
           <View style={styles.tagsRow}>
-            <View style={[styles.statusPill, { borderColor: statusColor, backgroundColor: `${statusColor}15` }]}>
-              <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
+            <View style={[styles.statusPill, isBlocked ? styles.statusPillBlocked : styles.statusPillOpen]}>
+              <View style={[styles.statusDot, { backgroundColor: isBlocked ? '#DC2626' : '#16A34A' }]} />
+              <Text style={[styles.statusPillText, isBlocked ? styles.statusTextRed : styles.statusTextGreen]}>
+                {isBlocked ? 'Blocked' : 'Open'}
+              </Text>
             </View>
 
             <View style={styles.levelPill}>
               <Text style={styles.levelPillText}>
-                {entity.level === -1 ? 'Level -1 (Subway)' : (entity.level === 1 ? 'Level 1 (FOB)' : 'Level 0 (Platform)')}
+                {entity.level === -1 ? 'Floor: Subway' : (entity.level === 1 ? 'Floor: FOB' : 'Floor: Level 0')}
               </Text>
             </View>
 
             {entity.wheelchairAccessible && (
               <View style={styles.accessiblePill}>
-                <Text style={styles.accessiblePillText}>♿ Accessible</Text>
+                <WheelchairIcon size={12} color="#1A1A1A" strokeWidth={2} />
+                <Text style={styles.accessiblePillText}>Step-free</Text>
               </View>
             )}
           </View>
@@ -93,33 +95,35 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
 
           {isBlocked && (
             <View style={styles.blockedAlertBox}>
-              <Text style={styles.blockedAlertTitle}>⚠ Incident Alert Active</Text>
-              <Text style={styles.blockedAlertDesc}>This location is currently blocked for maintenance. Routing will automatically seek alternate paths.</Text>
+              <AlertIcon size={16} color="#DC2626" strokeWidth={2} />
+              <Text style={styles.blockedAlertDesc}>
+                This facility is temporarily unavailable. Pathfinding will seek alternative routes.
+              </Text>
             </View>
           )}
 
           {/* Action Buttons */}
           <View style={styles.actionsRow}>
             <TouchableOpacity
-              style={styles.setStartBtn}
+              style={styles.auxBtn}
               onPress={() => {
                 onSetAsStart(entity.node);
                 onClose();
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.setStartBtnText}>📍 Set as Start</Text>
+              <Text style={styles.auxBtnText}>Set as start</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.setDestBtn}
+              style={styles.auxBtn}
               onPress={() => {
                 onSetAsDestination(entity.node);
                 onClose();
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.setDestBtnText}>🎯 Set as Destination</Text>
+              <Text style={styles.auxBtnText}>Set destination</Text>
             </TouchableOpacity>
           </View>
 
@@ -131,7 +135,8 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
             }}
             activeOpacity={0.85}
           >
-            <Text style={styles.navigateNowText}>START NAVIGATION</Text>
+            <Text style={styles.navigateNowText}>Navigate here</Text>
+            <ArrowRightIcon size={16} color="#1A1A1A" strokeWidth={2.5} />
           </TouchableOpacity>
         </View>
       </View>
@@ -146,14 +151,13 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end'
   },
   sheetContainer: {
-    backgroundColor: Colors.bgPrimary,
-    borderTopLeftRadius: Radii.hero,
-    borderTopRightRadius: Radii.hero,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     padding: Spacing.lg,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    ...Shadows.floating
+    borderTopColor: Colors.border
   },
   handleRow: {
     alignItems: 'center',
@@ -163,7 +167,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#CBD5E1'
+    backgroundColor: '#D5D5CE'
   },
   headerRow: {
     flexDirection: 'row',
@@ -175,149 +179,149 @@ const styles = StyleSheet.create({
     flex: 1
   },
   entityTypeLabel: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 11,
     color: Colors.textSecondary,
-    letterSpacing: 0.8,
+    fontWeight: '600',
     marginBottom: 2
   },
   entityName: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '700',
     color: Colors.textPrimary
   },
-  backBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    backgroundColor: Colors.bgSecondary,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    borderColor: Colors.border
-  },
-  backBtnText: {
-    color: Colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '600'
-  },
   closeBtn: {
-    padding: 6
-  },
-  closeText: {
-    fontSize: 18,
-    color: Colors.textTertiary,
-    fontWeight: '700'
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm
+    gap: 8,
+    marginVertical: 6
   },
   statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: Radii.sm,
+    borderRadius: Radii.pill,
     borderWidth: 1
+  },
+  statusPillOpen: {
+    backgroundColor: Colors.successLight,
+    borderColor: '#BBF7D0'
+  },
+  statusPillBlocked: {
+    backgroundColor: Colors.errorLight,
+    borderColor: '#FECACA'
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3
   },
   statusPillText: {
     fontSize: 11,
-    fontWeight: '700'
-  },
-  levelPill: {
-    backgroundColor: Colors.bgSecondary,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    borderColor: Colors.border
-  },
-  levelPillText: {
-    color: Colors.textSecondary,
-    fontSize: 11,
     fontWeight: '600'
   },
-  accessiblePill: {
-    backgroundColor: Colors.successLight,
+  statusTextGreen: {
+    color: Colors.success
+  },
+  statusTextRed: {
+    color: Colors.error
+  },
+  levelPill: {
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: Radii.sm,
+    borderRadius: Radii.pill
+  },
+  levelPillText: {
+    fontSize: 11,
+    color: Colors.textSecondary
+  },
+  accessiblePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FAFAF7',
     borderWidth: 1,
-    borderColor: Colors.success
+    borderColor: Colors.border,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radii.pill
   },
   accessiblePillText: {
-    color: Colors.success,
     fontSize: 11,
-    fontWeight: '700'
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   detailsText: {
-    color: Colors.textSecondary,
     fontSize: 13,
-    lineHeight: 18,
-    marginBottom: Spacing.md
+    color: Colors.textSecondary,
+    marginVertical: 8,
+    lineHeight: 18
   },
   blockedAlertBox: {
-    backgroundColor: Colors.errorLight,
-    borderRadius: Radii.md,
-    padding: Spacing.sm,
-    marginBottom: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: Colors.error
-  },
-  blockedAlertTitle: {
-    color: Colors.error,
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 2
+    borderColor: '#FECACA',
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 6
   },
   blockedAlertDesc: {
-    color: Colors.textPrimary,
-    fontSize: 11
+    flex: 1,
+    fontSize: 12,
+    color: '#DC2626',
+    lineHeight: 16
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm
+    gap: 8,
+    marginTop: Spacing.sm
   },
-  setStartBtn: {
+  auxBtn: {
     flex: 1,
-    backgroundColor: Colors.bgSecondary,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radii.button,
-    alignItems: 'center',
+    height: 42,
+    backgroundColor: '#FAFAF7',
+    borderRadius: Radii.pill,
     borderWidth: 1,
-    borderColor: Colors.border
-  },
-  setStartBtnText: {
-    color: Colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '600'
-  },
-  setDestBtn: {
-    flex: 1,
-    backgroundColor: Colors.bgSecondary,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radii.button,
+    borderColor: Colors.border,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border
+    justifyContent: 'center'
   },
-  setDestBtnText: {
-    color: Colors.textPrimary,
+  auxBtnText: {
     fontSize: 13,
-    fontWeight: '600'
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   navigateNowBtn: {
-    backgroundColor: Colors.goldPrimary,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: Radii.button,
+    height: 48,
+    backgroundColor: Colors.primary, // Hero Golden Yellow
+    borderRadius: Radii.pill,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.floating
+    gap: 6,
+    marginTop: Spacing.xs,
+    marginBottom: 6
   },
   navigateNowText: {
-    color: Colors.charcoalPrimary,
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.6
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1A1A1A'
   }
 });

@@ -1,69 +1,67 @@
-export const Colors = {
-  // Backgrounds - Modern Clean Slate
-  bgPrimary: '#F8FAFC',
-  bgSecondary: '#F1F5F9',
-  bgSurface: '#FFFFFF',
-  bgHover: '#E2E8F0',
-  bgElevated: '#FFFFFF',
+import { Platform, ViewStyle } from 'react-native';
 
-  // Typography
-  textPrimary: '#0F172A',
-  textSecondary: '#475569',
-  textTertiary: '#64748B',
-  textMuted: '#94A3B8',
+export const Colors = {
+  // Backgrounds & Surfaces (Warm Light Grey + Crisp White Cards)
+  bgPrimary: '#F5F5F2', // Warm light grey page background
+  bgSecondary: '#EEEEEC',
+  bgSurface: '#FFFFFF', // Clean flat white card surface
+  bgCard: '#FFFFFF',
+  bgHover: '#EBEBE6',
+  bgInput: '#FAFAF7',
+  bgElevated: '#FFFFFF',
+  bgHeaderWash: '#FFFDF5', // Subtle warm yellow wash for header
+
+  // Typography (Near-Black #1A1A1A, Never Pure #000)
+  textPrimary: '#1A1A1A',
+  textSecondary: '#666660',
+  textTertiary: '#888882',
+  textMuted: '#9E9E98',
   textWhite: '#FFFFFF',
 
-  // Borders & Dividers
-  border: '#E2E8F0',
-  borderLight: '#F1F5F9',
-  borderStrong: '#CBD5E1',
+  // Borders (Flat 1px, No Heavy Outlines)
+  border: '#E8E8E3',
+  borderLight: '#F0F0EB',
+  borderStrong: '#D5D5CE',
+  borderInput: '#E0E0DA',
+  borderFocus: '#F5B800',
 
-  // Transit Primary Brand (Deep Royal Sapphire & Slate Navy)
-  brandNavy: '#0F172A',
-  brandNavyLight: '#1E293B',
-  primary: '#2563EB',
-  primaryDark: '#1D4ED8',
-  primaryLight: '#EFF6FF',
-  primaryTint: 'rgba(37, 99, 235, 0.08)',
-  primaryTintSolid: '#EFF6FF',
+  // Hero Brand Golden Yellow (Quick-Commerce Signature)
+  primary: '#F5B800', // Hero golden yellow for CTAs, active chips, selected tabs
+  primaryHover: '#E5AA00',
+  primaryDark: '#B8860B',
+  primaryLight: '#FFF8E1',
+  primaryTint: 'rgba(245, 184, 0, 0.12)',
+  primaryTintSolid: '#FEF9E6',
 
-  // Backward compatibility aliases mapped to sleek royal indigo
-  goldPrimary: '#2563EB',
-  goldDark: '#1D4ED8',
-  goldLight: '#93C5FD',
-  goldTint: 'rgba(37, 99, 235, 0.08)',
-  goldTintMedium: 'rgba(37, 99, 235, 0.16)',
-  goldTintSolid: '#EFF6FF',
+  // Backward-compatible Golden Yellow Aliases
+  goldPrimary: '#F5B800',
+  goldDark: '#B8860B',
+  goldLight: '#FFF8E1',
+  goldTint: 'rgba(245, 184, 0, 0.12)',
+  goldTintMedium: 'rgba(245, 184, 0, 0.22)',
+  goldTintSolid: '#FEF9E6',
 
-  // Charcoal & Neutrals
-  charcoalPrimary: '#0F172A',
-  charcoalSurface: '#1E293B',
-  charcoalMuted: '#334155',
+  // Strict Semantics (Green ONLY for open/active, Red ONLY for alert/blocked)
+  success: '#16A34A', // Active / open
+  successTint: 'rgba(22, 163, 74, 0.10)',
+  successLight: '#EAF7EE',
 
-  // Semantic Colors
-  success: '#059669',
-  successTint: 'rgba(5, 150, 105, 0.08)',
-  successLight: '#ECFDF5',
+  error: '#DC2626', // Blocked / alert
+  errorTint: 'rgba(220, 38, 38, 0.10)',
+  errorLight: '#FEE2E2',
 
   warning: '#D97706',
-  warningTint: 'rgba(217, 119, 6, 0.08)',
-  warningLight: '#FFFBEB',
+  warningTint: 'rgba(217, 119, 6, 0.10)',
+  warningLight: '#FEF3C7',
 
-  error: '#DC2626',
-  errorTint: 'rgba(220, 38, 38, 0.08)',
-  errorLight: '#FEF2F2',
-
-  info: '#2563EB',
-  infoTint: 'rgba(37, 99, 235, 0.08)',
-  infoLight: '#EFF6FF',
-
-  // Map & Platform colors
-  mapBg: '#F8FAFC',
-  mapGrid: '#E2E8F0',
-  platformTrack: '#64748B',
-  platformBadgeBg: '#EFF6FF',
-  platformBadgeBorder: '#2563EB',
-  platformBadgeText: '#0F172A'
+  // Map & Blueprint Accent Colors
+  mapBg: '#F5F5F2',
+  mapGrid: '#E8E8E3',
+  platformTrack: '#73736C',
+  platformBadgeBg: '#FEF9E6',
+  platformBadgeBorder: '#F5B800',
+  platformBadgeText: '#1A1A1A',
+  routeActive: '#F5B800' // Golden yellow for active route line
 } as const;
 
 export const Spacing = {
@@ -80,33 +78,38 @@ export const Spacing = {
 
 export const Radii = {
   xs: 4,
-  sm: 8,
-  md: 12,
+  sm: 6,
+  input: 8, // 8px for search/text inputs
+  md: 12, // 12px for cards & tiles
   lg: 16,
-  xl: 20,
-  hero: 24,
-  button: 10,
+  card: 12,
+  tile: 12,
+  button: 999, // 999px for buttons & chips
   pill: 999
 } as const;
 
 export const Typography = {
+  fontFamily: Platform.select({
+    web: "'Plus Jakarta Sans', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    default: undefined
+  }),
   display: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800' as const,
-    color: Colors.textPrimary,
-    letterSpacing: -0.6
-  },
-  screenTitle: {
-    fontSize: 22,
-    fontWeight: '700' as const,
     color: Colors.textPrimary,
     letterSpacing: -0.4
   },
-  sectionTitle: {
-    fontSize: 16,
+  screenTitle: {
+    fontSize: 20,
     fontWeight: '700' as const,
     color: Colors.textPrimary,
-    letterSpacing: -0.2
+    letterSpacing: -0.3
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: Colors.textPrimary,
+    letterSpacing: -0.1
   },
   body: {
     fontSize: 14,
@@ -126,44 +129,53 @@ export const Typography = {
     color: Colors.textSecondary,
     lineHeight: 18
   },
+  tapLabel: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: Colors.textPrimary
+  },
+  meta: {
+    fontSize: 12,
+    fontWeight: '500' as const,
+    color: Colors.textSecondary
+  },
   caption: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
-    letterSpacing: 0.3
+    color: Colors.textSecondary
   }
 } as const;
-
-import { Platform, ViewStyle } from 'react-native';
 
 const isWeb = Platform.OS === 'web';
 
 export const Shadows = {
+  // Almost zero shadows — clean flat 1px borders per quick-commerce style
+  none: (isWeb ? { boxShadow: 'none' } : { elevation: 0 }) as ViewStyle,
   card: (isWeb
-    ? { boxShadow: '0 2px 10px rgba(15, 23, 42, 0.05)' }
+    ? { boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)' }
     : {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.03,
+        shadowRadius: 3,
+        elevation: 1
       }) as ViewStyle,
   floating: (isWeb
-    ? { boxShadow: '0 6px 20px rgba(15, 23, 42, 0.08)' }
+    ? { boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)' }
     : {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.08,
-        shadowRadius: 20,
-        elevation: 4
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 3
       }) as ViewStyle,
-  sm: (isWeb
-    ? { boxShadow: '0 1px 4px rgba(15, 23, 42, 0.04)' }
+  bottomSheet: (isWeb
+    ? { boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.08)' }
     : {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.04,
-        shadowRadius: 4,
-        elevation: 1
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 6
       }) as ViewStyle
 };

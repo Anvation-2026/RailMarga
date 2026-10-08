@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { RouteResult } from '../services/localRouter';
-import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import { Colors, Radii, Spacing, Shadows } from '../theme/tokens';
 import {
   WalkIcon,
-  WheelchairIcon,
   ElevatorIcon,
   RampIcon,
-  ClockIcon,
-  DistanceIcon,
-  CheckIcon,
   CloseIcon,
-  FullscreenIcon,
-  ArrowRightIcon,
-  AlertIcon
+  CheckIcon,
+  AlertIcon,
+  ArrowRightIcon
 } from './Icons';
 
 interface RoutePreviewCardProps {
@@ -31,156 +27,112 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
   onFitRoute,
   onClosePreview
 }) => {
-  const [showSteps, setShowSteps] = useState(true);
+  const [showAllSteps, setShowAllSteps] = useState(false);
   const isStepFree = route.accessibility.stepFree;
-  const isWheelchair = selectedProfileId === 'mobility_disabled';
+
+  const renderStepIcon = (instruction: string) => {
+    const text = instruction.toLowerCase();
+    if (text.includes('lift') || text.includes('elevator')) {
+      return <ElevatorIcon size={16} color="#1A1A1A" strokeWidth={1.75} />;
+    }
+    if (text.includes('ramp')) {
+      return <RampIcon size={16} color="#1A1A1A" strokeWidth={1.75} />;
+    }
+    return <WalkIcon size={16} color="#1A1A1A" strokeWidth={1.75} />;
+  };
+
+  const stepsToDisplay = showAllSteps ? route.steps : route.steps.slice(0, 3);
 
   return (
     <View style={styles.card} nativeID="route-results-section">
-      {/* Top Header Row */}
-      <View style={styles.topRow}>
-        <View style={styles.badgeRow}>
-          <View style={styles.routePill}>
-            <Text style={styles.routePillText}>OPTIMAL INDOOR PATH</Text>
-          </View>
-          {isStepFree ? (
-            <View style={styles.accessibleBadge}>
-              <CheckIcon size={12} color="#059669" strokeWidth={3} />
-              <Text style={styles.accessibleBadgeText}>Step-Free Verified</Text>
-            </View>
-          ) : (
-            <View style={styles.stairsBadge}>
-              <AlertIcon size={12} color="#D97706" />
-              <Text style={styles.stairsBadgeText}>Stairs Along Path</Text>
-            </View>
-          )}
+      {/* Delivery Tracking Header */}
+      <View style={styles.headerRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.destinationTitle} numberOfLines={1}>
+            {route.destination?.name || 'Destination'}
+          </Text>
+          <Text style={styles.originSub}>
+            From {route.start?.name || 'Station entrance'}
+          </Text>
         </View>
 
-        <View style={styles.topActions}>
-          <TouchableOpacity onPress={onFitRoute} style={styles.fitBtn} activeOpacity={0.8}>
-            <FullscreenIcon size={14} color="#2563EB" />
-            <Text style={styles.fitBtnText}>Fit Map</Text>
+        {onClosePreview && (
+          <TouchableOpacity
+            onPress={onClosePreview}
+            style={styles.closeBtn}
+            activeOpacity={0.75}
+            accessibilityLabel="Close route preview"
+          >
+            <CloseIcon size={16} color="#666660" />
           </TouchableOpacity>
-          {onClosePreview && (
-            <TouchableOpacity onPress={onClosePreview} style={styles.closeBtn} activeOpacity={0.8}>
-              <CloseIcon size={14} color="#64748B" />
-            </TouchableOpacity>
+        )}
+      </View>
+
+      {/* ETA & Distance Big Bold Tracking Stat (Delivery card style) */}
+      <View style={styles.etaContainer}>
+        <View style={styles.etaTextRow}>
+          <Text style={styles.etaBigText}>
+            {route.estimatedTimeMinutes} min
+          </Text>
+          <Text style={styles.etaBullet}>·</Text>
+          <Text style={styles.distanceText}>
+            {route.totalDistanceMeters} m
+          </Text>
+        </View>
+
+        {/* Step-Free / Stairs Status Pill */}
+        <View style={[styles.statusPill, isStepFree ? styles.statusPillGreen : styles.statusPillAmber]}>
+          {isStepFree ? (
+            <CheckIcon size={12} color="#16A34A" strokeWidth={2.5} />
+          ) : (
+            <AlertIcon size={12} color="#D97706" strokeWidth={2} />
           )}
+          <Text style={[styles.statusPillText, isStepFree ? styles.statusPillTextGreen : styles.statusPillTextAmber]}>
+            {isStepFree ? 'Step-free path' : 'Has stairs'}
+          </Text>
         </View>
       </View>
 
-      {/* Destination & Concourse Info */}
-      <View style={styles.destHeader}>
-        <Text style={styles.destTitle} numberOfLines={1}>
-          {route.destination?.name || 'Destination'}
-        </Text>
-        <Text style={styles.destSub}>
-          Origin: {route.start?.name || 'Station Concourse'} • Deterministic A* Graph Path
-        </Text>
-      </View>
-
-      {/* Core Metrics Banner */}
-      <View style={styles.metricsRow}>
-        <View style={styles.metricItem}>
-          <View style={styles.metricHeader}>
-            <ClockIcon size={14} color="#2563EB" />
-            <Text style={styles.metricLabel}>Est. Walking Time</Text>
-          </View>
-          <Text style={styles.metricValue}>{route.estimatedTimeMinutes} min</Text>
-        </View>
-
-        <View style={styles.metricDivider} />
-
-        <View style={styles.metricItem}>
-          <View style={styles.metricHeader}>
-            <DistanceIcon size={14} color="#2563EB" />
-            <Text style={styles.metricLabel}>Total Distance</Text>
-          </View>
-          <Text style={styles.metricValue}>{route.totalDistanceMeters} m</Text>
-        </View>
-
-        <View style={styles.metricDivider} />
-
-        <View style={styles.metricItem}>
-          <View style={styles.metricHeader}>
-            <WalkIcon size={14} color="#2563EB" />
-            <Text style={styles.metricLabel}>Turn Cues</Text>
-          </View>
-          <Text style={styles.metricValue}>{route.steps.length} steps</Text>
-        </View>
-      </View>
-
-      {/* Vertical Transitions Chips */}
-      {(route.accessibility.liftsUsed.length > 0 ||
-        route.accessibility.rampsUsed.length > 0 ||
-        route.accessibility.stairsUsed.length > 0) && (
-        <View style={styles.verticalTransitionsRow}>
-          {route.accessibility.liftsUsed.length > 0 && (
-            <View style={styles.facilityPill}>
-              <ElevatorIcon size={13} color="#2563EB" />
-              <Text style={styles.facilityPillText}>Lift: {route.accessibility.liftsUsed.join(', ')}</Text>
+      {/* Step-by-step directions */}
+      <View style={styles.stepsContainer}>
+        <Text style={styles.stepsHeader}>Directions</Text>
+        {stepsToDisplay.map((step, idx) => (
+          <View key={idx} style={styles.stepRow}>
+            <View style={styles.stepIconBox}>
+              {renderStepIcon(step.instruction)}
             </View>
-          )}
-          {route.accessibility.rampsUsed.length > 0 && (
-            <View style={styles.facilityPill}>
-              <RampIcon size={13} color="#059669" />
-              <Text style={styles.facilityPillText}>Ramp: {route.accessibility.rampsUsed.join(', ')}</Text>
-            </View>
-          )}
-          {route.accessibility.stairsUsed.length > 0 && (
-            <View style={[styles.facilityPill, styles.stairPill]}>
-              <AlertIcon size={13} color="#DC2626" />
-              <Text style={[styles.facilityPillText, { color: '#DC2626' }]}>
-                Stairs: {route.accessibility.stairsUsed.join(', ')}
+            <View style={styles.stepContent}>
+              <Text style={styles.stepInstruction}>{step.instruction}</Text>
+              <Text style={styles.stepMeta}>
+                {step.distanceMeters} m · Floor: {step.floor === -1 ? 'Subway' : step.floor === 1 ? 'FOB' : 'Level 0'}
               </Text>
             </View>
-          )}
-        </View>
-      )}
+          </View>
+        ))}
 
-      {/* Turn-by-Turn Steps Accordion */}
-      <TouchableOpacity
-        style={styles.stepsToggle}
-        onPress={() => setShowSteps(!showSteps)}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.stepsToggleText}>
-          {showSteps ? 'Hide Turn-by-Turn Guidance' : 'View Step-by-Step Directions'}
-        </Text>
-        <Text style={styles.stepsToggleArrow}>{showSteps ? '▲' : '▼'}</Text>
-      </TouchableOpacity>
+        {route.steps.length > 3 && (
+          <TouchableOpacity
+            style={styles.moreStepsBtn}
+            onPress={() => setShowAllSteps(!showAllSteps)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.moreStepsText}>
+              {showAllSteps ? 'Show fewer steps' : `+ ${route.steps.length - 3} more steps`}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
-      {showSteps && (
-        <View style={styles.stepsListContainer}>
-          {route.steps.map((step, idx) => (
-            <View key={idx} style={styles.stepItem}>
-              <View style={styles.stepNumberBadge}>
-                <Text style={styles.stepNumberText}>{idx + 1}</Text>
-              </View>
-              <View style={styles.stepTextCol}>
-                <Text style={styles.stepInstruction}>{step.instruction}</Text>
-                <View style={styles.stepMetaRow}>
-                  <Text style={styles.stepDistance}>{step.distance}m</Text>
-                  {step.pathType && (
-                    <Text style={styles.stepTransitionBadge}>
-                      {step.pathType.replace('_', ' ').toUpperCase()}
-                    </Text>
-                  )}
-                </View>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Start Navigation CTA */}
+      {/* Sticky Hero Golden Yellow Action CTA */}
       <TouchableOpacity
         style={styles.startNavBtn}
         onPress={onStartNavigation}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Start turn-by-turn navigation"
       >
-        <Text style={styles.startNavText}>START TURN-BY-TURN GUIDANCE</Text>
-        <ArrowRightIcon size={18} color="#FFFFFF" strokeWidth={2.5} />
+        <Text style={styles.startNavText}>Start navigation</Text>
+        <ArrowRightIcon size={18} color="#1A1A1A" strokeWidth={2.5} />
       </TouchableOpacity>
     </View>
   );
@@ -189,257 +141,161 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: Radii.lg,
+    borderRadius: Radii.card, // 12px
+    borderWidth: 1,
+    borderColor: Colors.border,
     padding: Spacing.md,
-    borderWidth: 1.5,
-    borderColor: '#93C5FD',
-    ...Shadows.floating,
-    marginTop: 10
+    marginTop: Spacing.sm
   },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6
-  },
-  routePill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-    backgroundColor: '#0F172A'
-  },
-  routePillText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5
-  },
-  accessibleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radii.pill,
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0'
-  },
-  accessibleBadgeText: {
-    color: '#059669',
-    fontSize: 10,
-    fontWeight: '700'
-  },
-  stairsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radii.pill,
-    backgroundColor: '#FFFBEB',
-    borderWidth: 1,
-    borderColor: '#FDE68A'
-  },
-  stairsBadgeText: {
-    color: '#D97706',
-    fontSize: 10,
-    fontWeight: '700'
-  },
-  topActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6
-  },
-  fitBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radii.sm,
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#BFDBFE'
-  },
-  fitBtnText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#2563EB'
-  },
-  closeBtn: {
-    padding: 6,
-    borderRadius: Radii.sm,
-    backgroundColor: '#F1F5F9'
-  },
-  destHeader: {
-    marginBottom: 12
-  },
-  destTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A'
-  },
-  destSub: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: Radii.md,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 12
-  },
-  metricItem: {
-    flex: 1,
-    alignItems: 'center'
-  },
-  metricHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 2
-  },
-  metricLabel: {
-    fontSize: 10,
-    color: '#64748B',
-    fontWeight: '600'
-  },
-  metricValue: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A'
-  },
-  metricDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: '#E2E8F0'
-  },
-  verticalTransitionsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 10
-  },
-  facilityPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  facilityPillText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#334155'
-  },
-  stairPill: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA'
-  },
-  stepsToggle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    marginBottom: 6
-  },
-  stepsToggleText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#2563EB'
-  },
-  stepsToggleArrow: {
-    fontSize: 10,
-    color: '#2563EB'
-  },
-  stepsListContainer: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: Radii.md,
-    padding: 10,
-    gap: 8,
-    marginBottom: 12,
-    maxHeight: 220
-  },
-  stepItem: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8
+    justifyContent: 'space-between',
+    marginBottom: Spacing.xs
   },
-  stepNumberBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#2563EB',
+  destinationTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.textPrimary
+  },
+  originSub: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FAFAF7',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 1
+    borderWidth: 1,
+    borderColor: Colors.border
   },
-  stepNumberText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800'
+  etaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FAFAF7',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginVertical: Spacing.xs
   },
-  stepTextCol: {
+  etaTextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  etaBigText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1A1A1A'
+  },
+  etaBullet: {
+    fontSize: 18,
+    color: Colors.textSecondary,
+    fontWeight: '700'
+  },
+  distanceText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textSecondary
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radii.pill,
+    borderWidth: 1
+  },
+  statusPillGreen: {
+    backgroundColor: Colors.successLight,
+    borderColor: '#BBF7D0'
+  },
+  statusPillAmber: {
+    backgroundColor: Colors.warningLight,
+    borderColor: '#FDE68A'
+  },
+  statusPillText: {
+    fontSize: 11,
+    fontWeight: '600'
+  },
+  statusPillTextGreen: {
+    color: Colors.success
+  },
+  statusPillTextAmber: {
+    color: Colors.warning
+  },
+  stepsContainer: {
+    marginVertical: Spacing.xs,
+    paddingTop: 4
+  },
+  stepsHeader: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 8
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F2'
+  },
+  stepIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2
+  },
+  stepContent: {
     flex: 1
   },
   stepInstruction: {
-    fontSize: 12,
-    color: '#0F172A',
+    fontSize: 13,
     fontWeight: '500',
-    lineHeight: 16
+    color: Colors.textPrimary
   },
-  stepMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  stepMeta: {
+    fontSize: 11,
+    color: Colors.textSecondary,
     marginTop: 2
   },
-  stepDistance: {
-    fontSize: 11,
-    color: '#64748B',
-    fontWeight: '600'
+  moreStepsBtn: {
+    paddingVertical: 6,
+    alignItems: 'center'
   },
-  stepTransitionBadge: {
-    fontSize: 9,
-    color: '#2563EB',
-    fontWeight: '700',
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 3
+  moreStepsText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary
   },
   startNavBtn: {
+    height: 48,
+    backgroundColor: Colors.primary, // Hero Golden Yellow
+    borderRadius: Radii.pill, // 999px
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#2563EB',
-    borderRadius: Radii.md,
-    paddingVertical: 14,
-    ...Shadows.sm
+    marginTop: Spacing.sm
   },
   startNavText: {
-    color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
-    letterSpacing: 0.5
+    color: '#1A1A1A'
   }
 });

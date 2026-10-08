@@ -1,59 +1,25 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import { Colors, Radii, Spacing, Typography } from '../theme/tokens';
 import {
   WalkIcon,
   WheelchairIcon,
   SeniorIcon,
-  FamilyIcon,
-  AudioTactileIcon,
-  CheckIcon
+  FamilyIcon
 } from './Icons';
 
 export interface ProfileMeta {
   id: string;
   name: string;
-  iconType: 'walk' | 'wheelchair' | 'senior' | 'family' | 'audio';
-  description: string;
-  badge: string;
+  shortLabel: string;
+  iconType: 'walk' | 'wheelchair' | 'senior' | 'fatigue';
 }
 
 export const PROFILES: ProfileMeta[] = [
-  {
-    id: 'first_time',
-    name: 'Standard Walk',
-    iconType: 'walk',
-    description: 'Direct concourse corridors with landmarks',
-    badge: 'Standard'
-  },
-  {
-    id: 'mobility_disabled',
-    name: 'Step-Free / ♿',
-    iconType: 'wheelchair',
-    description: '100% elevators, lifts & gentle ramps only',
-    badge: 'Step-Free'
-  },
-  {
-    id: 'elderly',
-    name: 'Senior Citizen',
-    iconType: 'senior',
-    description: 'Gentle slopes, avoids stairs & long detours',
-    badge: 'Low Fatigue'
-  },
-  {
-    id: 'child',
-    name: 'Family / Luggage',
-    iconType: 'family',
-    description: 'Wide walking lanes & safety rail corridors',
-    badge: 'Safe Corridors'
-  },
-  {
-    id: 'visually_impaired',
-    name: 'Audio / Tactile',
-    iconType: 'audio',
-    description: 'Tactile paving corridors & voice alerts',
-    badge: 'Tactile'
-  }
+  { id: 'first_time', name: 'Standard Walk', shortLabel: 'Walk', iconType: 'walk' },
+  { id: 'mobility_disabled', name: 'Step-Free / ♿', shortLabel: 'Step-free', iconType: 'wheelchair' },
+  { id: 'elderly', name: 'Senior Citizen', shortLabel: 'Senior', iconType: 'senior' },
+  { id: 'child', name: 'Low Fatigue / Luggage', shortLabel: 'Low fatigue', iconType: 'fatigue' }
 ];
 
 interface ProfilePickerProps {
@@ -65,63 +31,50 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
   selectedProfileId,
   onSelectProfile
 }) => {
-  const renderProfileIcon = (type: string, isSelected: boolean) => {
-    const color = isSelected ? '#2563EB' : '#475569';
+  const renderIcon = (type: string, isSelected: boolean) => {
+    const iconColor = isSelected ? '#1A1A1A' : '#666660';
     switch (type) {
-      case 'walk': return <WalkIcon size={18} color={color} />;
-      case 'wheelchair': return <WheelchairIcon size={18} color={color} />;
-      case 'senior': return <SeniorIcon size={18} color={color} />;
-      case 'family': return <FamilyIcon size={18} color={color} />;
-      case 'audio': return <AudioTactileIcon size={18} color={color} />;
-      default: return <WalkIcon size={18} color={color} />;
+      case 'walk': return <WalkIcon size={16} color={iconColor} strokeWidth={2} />;
+      case 'wheelchair': return <WheelchairIcon size={16} color={iconColor} strokeWidth={2} />;
+      case 'senior': return <SeniorIcon size={16} color={iconColor} strokeWidth={2} />;
+      case 'fatigue': return <FamilyIcon size={16} color={iconColor} strokeWidth={2} />;
+      default: return <WalkIcon size={16} color={iconColor} strokeWidth={2} />;
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>ACCESSIBILITY & ROUTING PREFERENCES</Text>
-        <Text style={styles.subtext}>Personalized pathfinding</Text>
-      </View>
+      <Text style={styles.sectionLabel}>Walking mode</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.pillsRow}
       >
         {PROFILES.map((p) => {
           const isSelected = p.id === selectedProfileId;
+          const isWheelchair = p.id === 'mobility_disabled';
 
           return (
             <TouchableOpacity
               key={p.id}
               style={[
-                styles.card,
-                isSelected ? styles.cardSelected : styles.cardUnselected
+                styles.pill,
+                isSelected ? styles.pillSelected : styles.pillUnselected,
+                isWheelchair && !isSelected && styles.pillWheelchairBorder
               ]}
               onPress={() => onSelectProfile(p.id)}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={`Select ${p.name} mode`}
             >
-              <View style={styles.cardTopRow}>
-                <View style={[styles.iconBox, isSelected && styles.iconBoxSelected]}>
-                  {renderProfileIcon(p.iconType, isSelected)}
-                </View>
-                <View style={[styles.badge, isSelected && styles.badgeSelected]}>
-                  {isSelected ? (
-                    <View style={styles.activeBadgeContent}>
-                      <CheckIcon size={11} color="#2563EB" strokeWidth={3} />
-                      <Text style={styles.badgeTextSelected}>ACTIVE</Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.badgeText}>{p.badge}</Text>
-                  )}
-                </View>
-              </View>
-
-              <Text style={[styles.name, isSelected && styles.nameSelected]} numberOfLines={1}>
-                {p.name}
-              </Text>
-              <Text style={styles.description} numberOfLines={2}>
-                {p.description}
+              {renderIcon(p.iconType, isSelected)}
+              <Text
+                style={[
+                  styles.pillText,
+                  isSelected ? styles.pillTextSelected : styles.pillTextUnselected
+                ]}
+              >
+                {p.shortLabel}
               </Text>
             </TouchableOpacity>
           );
@@ -133,108 +86,50 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: Spacing.xs,
-    width: '100%'
+    marginVertical: Spacing.xs
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary,
     marginBottom: Spacing.xs,
-    paddingHorizontal: 2
+    marginLeft: 2
   },
-  title: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase'
-  },
-  subtext: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '500'
-  },
-  scrollContent: {
+  pillsRow: {
     flexDirection: 'row',
     gap: 8,
     paddingVertical: 2
   },
-  card: {
-    width: 154,
-    borderRadius: Radii.md,
-    padding: 12,
-    ...Shadows.sm
-  },
-  cardUnselected: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  cardSelected: {
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1.5,
-    borderColor: '#2563EB'
-  },
-  cardTopRow: {
+  pill: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8
-  },
-  iconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  iconBoxSelected: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#BFDBFE'
-  },
-  badge: {
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    gap: 6,
+    height: 44, // Minimum 44px tap target for accessibility
+    paddingHorizontal: 14,
     borderRadius: Radii.pill,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
+    borderWidth: 1
   },
-  badgeSelected: {
-    backgroundColor: '#DBEAFE',
-    borderColor: '#93C5FD'
+  pillUnselected: {
+    backgroundColor: '#FFFFFF',
+    borderColor: Colors.border
   },
-  activeBadgeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3
+  pillSelected: {
+    backgroundColor: Colors.primary, // Hero Golden Yellow
+    borderColor: Colors.primary,
+    transform: [{ scale: 1 }]
   },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#64748B'
+  pillWheelchairBorder: {
+    borderColor: '#D5D5CE'
   },
-  badgeTextSelected: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#1D4ED8'
-  },
-  name: {
+  pillText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 4
+    fontWeight: '600'
   },
-  nameSelected: {
-    color: '#1D4ED8'
+  pillTextUnselected: {
+    color: Colors.textPrimary
   },
-  description: {
-    fontSize: 11,
-    color: '#64748B',
-    lineHeight: 15
+  pillTextSelected: {
+    color: '#1A1A1A',
+    fontWeight: '700'
   }
 });

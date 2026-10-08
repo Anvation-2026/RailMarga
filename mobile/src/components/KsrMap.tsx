@@ -351,19 +351,9 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                   />
                   <SvgText
                     x={fac.coordinates.x}
-                    y={fac.coordinates.y + 10}
+                    y={fac.coordinates.y + 16}
                     fill={Colors.error}
-                    fontSize="28"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    🚧
-                  </SvgText>
-                  <SvgText
-                    x={fac.coordinates.x}
-                    y={fac.coordinates.y + 40}
-                    fill={Colors.error}
-                    fontSize="20"
+                    fontSize="18"
                     fontWeight="800"
                     textAnchor="middle"
                   >
@@ -373,44 +363,44 @@ export const KsrMap: React.FC<KsrMapProps> = ({
               );
             })}
 
-            {/* B. Active Route Overlay (Continuously Moving Green Dashed Line) */}
+            {/* B. Active Route Overlay (Continuously Moving Golden Yellow Dashed Line) */}
             {polylinePoints.length > 0 && (
               <G>
-                {/* 1. Luminous Green Ambient Glow */}
+                {/* 1. Golden Yellow Ambient Guide Glow */}
                 <Polyline
                   points={polylinePoints}
                   fill="none"
-                  stroke="rgba(16, 185, 129, 0.28)"
+                  stroke="rgba(245, 184, 0, 0.28)"
                   strokeWidth="24"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* 2. Soft Green Guide Line */}
+                {/* 2. Soft Yellow Guide Line */}
                 <Polyline
                   points={polylinePoints}
                   fill="none"
-                  stroke="rgba(16, 185, 129, 0.35)"
+                  stroke="rgba(245, 184, 0, 0.45)"
                   strokeWidth="8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* 3. Main Emerald Green Dashed Moving Line */}
+                {/* 3. Main Hero Golden Yellow Dashed Moving Line */}
                 <Polyline
                   points={polylinePoints}
                   fill="none"
-                  stroke="#10B981"
+                  stroke="#F5B800"
                   strokeWidth="12"
                   strokeDasharray="24,14"
                   strokeDashoffset={dashOffset}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* 4. Bright Mint Moving Core Dash for Motion Depth */}
+                {/* 4. Near-Black Motion Accent Dash for High Visual Contrast */}
                 <Polyline
                   points={polylinePoints}
                   fill="none"
-                  stroke="#A7F3D0"
-                  strokeWidth="4"
+                  stroke="#1A1A1A"
+                  strokeWidth="3.5"
                   strokeDasharray="14,24"
                   strokeDashoffset={dashOffset}
                   strokeLinecap="round"
@@ -419,54 +409,54 @@ export const KsrMap: React.FC<KsrMapProps> = ({
               </G>
             )}
 
-            {/* C. Source Location Marker (Charcoal + Gold Accent) */}
+            {/* C. Source Location Marker (Near-Black + Gold Core) */}
             {currentLocation && (
               <G>
                 <Circle
                   cx={currentLocation.x}
                   cy={currentLocation.y}
-                  r="36"
-                  fill={Colors.goldTintMedium}
-                  stroke={Colors.charcoalPrimary}
-                  strokeWidth="4"
+                  r="32"
+                  fill="rgba(26, 26, 26, 0.12)"
+                  stroke="#1A1A1A"
+                  strokeWidth="3.5"
                 />
-                <Circle cx={currentLocation.x} cy={currentLocation.y} r="18" fill={Colors.charcoalPrimary} />
-                <Circle cx={currentLocation.x} cy={currentLocation.y} r="8" fill={Colors.goldPrimary} />
+                <Circle cx={currentLocation.x} cy={currentLocation.y} r="16" fill="#1A1A1A" />
+                <Circle cx={currentLocation.x} cy={currentLocation.y} r="6" fill="#F5B800" />
                 <SvgText
                   x={currentLocation.x}
-                  y={currentLocation.y - 44}
-                  fill={Colors.charcoalPrimary}
-                  fontSize="26"
+                  y={currentLocation.y - 40}
+                  fill="#1A1A1A"
+                  fontSize="22"
                   fontWeight="bold"
                   textAnchor="middle"
                 >
-                  📍 START
+                  START
                 </SvgText>
               </G>
             )}
 
-            {/* D. Destination Location Marker (Gold / Dark Gold) */}
+            {/* D. Destination Location Marker (Golden Yellow Hero + Near-Black Core) */}
             {destinationLocation && (
               <G>
                 <Circle
                   cx={destinationLocation.x}
                   cy={destinationLocation.y}
-                  r="36"
-                  fill={Colors.goldTintMedium}
-                  stroke={Colors.goldPrimary}
-                  strokeWidth="4"
+                  r="32"
+                  fill="rgba(245, 184, 0, 0.20)"
+                  stroke="#F5B800"
+                  strokeWidth="3.5"
                 />
-                <Circle cx={destinationLocation.x} cy={destinationLocation.y} r="18" fill={Colors.goldPrimary} />
-                <Circle cx={destinationLocation.x} cy={destinationLocation.y} r="8" fill={Colors.charcoalPrimary} />
+                <Circle cx={destinationLocation.x} cy={destinationLocation.y} r="16" fill="#F5B800" />
+                <Circle cx={destinationLocation.x} cy={destinationLocation.y} r="6" fill="#1A1A1A" />
                 <SvgText
                   x={destinationLocation.x}
-                  y={destinationLocation.y - 44}
-                  fill={Colors.goldDark}
-                  fontSize="26"
+                  y={destinationLocation.y - 40}
+                  fill="#1A1A1A"
+                  fontSize="22"
                   fontWeight="bold"
                   textAnchor="middle"
                 >
-                  🎯 DESTINATION
+                  DESTINATION
                 </SvgText>
               </G>
             )}
@@ -551,12 +541,12 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                   return null;
                 }
 
-                let iconChar = '🏢';
-                if (isLift) iconChar = '🛗';
-                else if (isRamp) iconChar = '↗';
-                else if (isToilet) iconChar = '🚻';
-                else if (f.type === 'METRO_LINK') iconChar = '🚇';
-                else if (f.type === 'TICKET_COUNTER') iconChar = '🎫';
+                let iconLabel = 'POI';
+                if (isLift) iconLabel = 'LIFT';
+                else if (isRamp) iconLabel = 'RAMP';
+                else if (isToilet) iconLabel = 'WC';
+                else if (f.type === 'METRO_LINK') iconLabel = 'METRO';
+                else if (f.type === 'TICKET_COUNTER') iconLabel = 'UTS';
 
                 const facilityAction = () => onSelectFacility && onSelectFacility(f);
 
@@ -566,19 +556,19 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                       cx={f.coordinates.x}
                       cy={f.coordinates.y}
                       r={isDetailedZoom ? 26 : 22}
-                      fill={Colors.bgPrimary}
+                      fill="#FFFFFF"
                       stroke={statusColor}
-                      strokeWidth="3"
+                      strokeWidth="2.5"
                     />
                     <SvgText
                       x={f.coordinates.x}
-                      y={f.coordinates.y + 7}
+                      y={f.coordinates.y + 5}
                       fill={Colors.textPrimary}
-                      fontSize="18"
-                      fontWeight="bold"
+                      fontSize={iconLabel.length > 3 ? "11" : "13"}
+                      fontWeight="800"
                       textAnchor="middle"
                     >
-                      {iconChar}
+                      {iconLabel}
                     </SvgText>
                   </G>
                 );
@@ -627,16 +617,16 @@ export const KsrMap: React.FC<KsrMapProps> = ({
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.controlBtnTextual} onPress={handleCenter} activeOpacity={0.8}>
-            <Text style={styles.controlLabel}>⌾ CENTER</Text>
+            <Text style={styles.controlLabel}>Recenter</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.controlBtnTextual} onPress={handleReset} activeOpacity={0.8}>
-            <Text style={styles.controlLabel}>↻ RESET</Text>
+            <Text style={styles.controlLabel}>Reset</Text>
           </TouchableOpacity>
 
           {polylinePoints.length > 0 && (
             <TouchableOpacity style={styles.controlBtnActive} onPress={handleFitRoute} activeOpacity={0.8}>
-              <Text style={styles.controlLabelActive}>⛶ FIT ROUTE</Text>
+              <Text style={styles.controlLabelActive}>Fit route</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -652,12 +642,12 @@ export const KsrMap: React.FC<KsrMapProps> = ({
             <Text style={styles.legendText}>Blocked</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+            <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
             <Text style={styles.legendText}>Route (Active)</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Colors.charcoalPrimary }]} />
-            <Text style={styles.legendText}>PF 1-10</Text>
+            <View style={[styles.legendDot, { backgroundColor: '#1A1A1A' }]} />
+            <Text style={styles.legendText}>PF 1–10</Text>
           </View>
         </View>
       </View>

@@ -2,14 +2,13 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { StationNode } from '../services/localRouter';
 import { SourceMethod, DestinationMethod } from '../store/navigationStore';
-import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import { Colors, Radii, Spacing } from '../theme/tokens';
 import {
-  MapPinIcon,
-  QrIcon,
   SearchIcon,
+  QrIcon,
   SwapIcon,
-  TrainIcon,
   CloseIcon,
+  MapPinIcon,
   CheckIcon
 } from './Icons';
 
@@ -42,355 +41,235 @@ export const NavigationInputCard: React.FC<NavigationInputCardProps> = ({
   onClearSource,
   onClearDestination
 }) => {
-  const getMethodBadgeText = (method: SourceMethod | DestinationMethod) => {
-    switch (method) {
-      case 'MAP': return 'Map Pin';
-      case 'QR': return 'QR Verified';
-      case 'SEARCH': return 'Selected';
-      case 'PLATFORM': return 'Platform';
-      case 'FACILITY': return 'Facility';
-      case 'GPS': return 'Live Anchor';
-      default: return null;
-    }
-  };
+  // 1. Initial State: Single Large Search Bar (Quick-Commerce "Where to?" first)
+  if (!destinationNode) {
+    return (
+      <View style={styles.searchBarContainer}>
+        <TouchableOpacity
+          style={styles.bigSearchBar}
+          onPress={onOpenDestinationSearch}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Search destination at KSR Bengaluru"
+        >
+          <SearchIcon size={20} color="#1A1A1A" strokeWidth={2} />
+          <Text style={styles.searchPlaceholder} numberOfLines={1}>
+            Where to? Platform 8, Lift 2, Waiting Room…
+          </Text>
+        </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.qrScanBtn}
+          onPress={onOpenQrScan}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Scan QR Checkpoint"
+        >
+          <QrIcon size={20} color="#1A1A1A" strokeWidth={1.75} />
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // 2. Destination Picked: Show Destination + Starting Gate (Auto-filled)
   return (
-    <View style={styles.card}>
-      {/* Route Inputs Wrapper */}
-      <View style={styles.inputsRow}>
-        {/* Left Transit Track Indicator */}
-        <View style={styles.timelineCol}>
-          <View style={styles.startDotOuter}>
-            <View style={styles.startDotInner} />
-          </View>
-          <View style={styles.trackLine} />
-          <View style={styles.destDotOuter}>
-            <View style={styles.destDotInner} />
-          </View>
+    <View style={styles.expandedCard}>
+      {/* Destination Selected Banner */}
+      <View style={styles.fieldRow}>
+        <View style={styles.dotIndicatorDestination} />
+        <View style={styles.fieldContent}>
+          <Text style={styles.fieldLabel}>Destination</Text>
+          <TouchableOpacity
+            onPress={onOpenDestinationSearch}
+            activeOpacity={0.8}
+            style={styles.locationTitleTouchable}
+          >
+            <Text style={styles.destinationTitle} numberOfLines={1}>
+              {destinationNode.name}
+            </Text>
+            <Text style={styles.locationSub}>
+              {destinationNode.level === -1
+                ? 'Subway · Level -1'
+                : destinationNode.level === 1
+                ? 'FOB · Level 1'
+                : 'Concourse · Level 0'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Input Fields Column */}
-        <View style={styles.fieldsCol}>
-          {/* FROM / ORIGIN FIELD */}
-          <View style={styles.fieldWrapper}>
-            <View style={styles.fieldHeader}>
-              <Text style={styles.fieldLabel}>STARTING POINT / GATE</Text>
-              {startNode && sourceMethod && (
-                <View style={styles.methodBadge}>
-                  <CheckIcon size={10} color="#059669" strokeWidth={3} />
-                  <Text style={styles.methodBadgeText}>{getMethodBadgeText(sourceMethod)}</Text>
-                </View>
-              )}
-            </View>
+        {onClearDestination && (
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={onClearDestination}
+            activeOpacity={0.7}
+            accessibilityLabel="Clear destination"
+          >
+            <CloseIcon size={16} color="#666660" />
+          </TouchableOpacity>
+        )}
+      </View>
 
-            {startNode ? (
-              <View style={styles.selectedLocationBox}>
-                <TouchableOpacity
-                  style={styles.selectedLocationTouchable}
-                  onPress={onOpenSourceSearch}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.locationTitle} numberOfLines={1}>{startNode.name}</Text>
-                  <Text style={styles.locationSub}>
-                    {startNode.level === -1 ? 'Subway • Level -1' : (startNode.level === 1 ? 'FOB • Level 1' : 'Concourse • Level 0')}
-                    {startNode.wheelchairAccessible ? ' • Step-Free' : ''}
-                  </Text>
-                </TouchableOpacity>
-                {onClearSource && (
-                  <TouchableOpacity
-                    onPress={onClearSource}
-                    style={styles.clearBtn}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <CloseIcon size={16} color="#64748B" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ) : (
-              <View style={styles.emptyPromptRow}>
-                <TouchableOpacity
-                  style={styles.emptyPromptBtn}
-                  onPress={onOpenSourceSearch}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.placeholderText}>Choose departure gate, entrance or current location</Text>
-                </TouchableOpacity>
-                <View style={styles.quickSourceActions}>
-                  <TouchableOpacity style={styles.actionChip} onPress={onSelectSourceOnMap} activeOpacity={0.75}>
-                    <MapPinIcon size={14} color="#2563EB" />
-                    <Text style={styles.actionChipText}>Map</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionChip} onPress={onOpenQrScan} activeOpacity={0.75}>
-                    <QrIcon size={14} color="#2563EB" />
-                    <Text style={styles.actionChipText}>QR</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
+      <View style={styles.dividerRow}>
+        <View style={styles.dividerLine} />
+        <TouchableOpacity
+          style={styles.swapBtn}
+          onPress={onSwap}
+          activeOpacity={0.8}
+          accessibilityLabel="Swap start and destination"
+        >
+          <SwapIcon size={16} color="#1A1A1A" strokeWidth={2} />
+        </TouchableOpacity>
+      </View>
 
-          {/* Divider with Center Swap Button */}
-          <View style={styles.dividerRow}>
-            <View style={styles.hairlineDivider} />
-            <TouchableOpacity
-              style={[
-                styles.swapBtn,
-                (!startNode && !destinationNode) && styles.swapBtnDisabled
-              ]}
-              onPress={onSwap}
-              activeOpacity={0.8}
-              disabled={!startNode && !destinationNode}
-            >
-              <SwapIcon size={16} color={(!startNode && !destinationNode) ? '#CBD5E1' : '#2563EB'} />
-            </TouchableOpacity>
-          </View>
-
-          {/* TO / DESTINATION FIELD */}
-          <View style={styles.fieldWrapper}>
-            <View style={styles.fieldHeader}>
-              <Text style={styles.fieldLabel}>DESTINATION</Text>
-              {destinationNode && destinationMethod && (
-                <View style={styles.methodBadge}>
-                  <CheckIcon size={10} color="#059669" strokeWidth={3} />
-                  <Text style={styles.methodBadgeText}>{getMethodBadgeText(destinationMethod)}</Text>
-                </View>
-              )}
-            </View>
-
-            {destinationNode ? (
-              <View style={styles.selectedLocationBox}>
-                <TouchableOpacity
-                  style={styles.selectedLocationTouchable}
-                  onPress={onOpenDestinationSearch}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.locationTitle} numberOfLines={1}>{destinationNode.name}</Text>
-                  <Text style={styles.locationSub}>
-                    {destinationNode.level === -1 ? 'Subway • Level -1' : (destinationNode.level === 1 ? 'FOB • Level 1' : 'Concourse • Level 0')}
-                    {destinationNode.wheelchairAccessible ? ' • Step-Free' : ''}
-                  </Text>
-                </TouchableOpacity>
-                {onClearDestination && (
-                  <TouchableOpacity
-                    onPress={onClearDestination}
-                    style={styles.clearBtn}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <CloseIcon size={16} color="#64748B" />
-                  </TouchableOpacity>
-                )}
-              </View>
-            ) : (
-              <View style={styles.emptyPromptRow}>
-                <TouchableOpacity
-                  style={styles.emptyPromptBtn}
-                  onPress={onOpenDestinationSearch}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.placeholderText}>Where to? (e.g. Platform 8, Waiting Room, Lift 2)</Text>
-                </TouchableOpacity>
-                <View style={styles.quickSourceActions}>
-                  <TouchableOpacity style={styles.actionChip} onPress={onSelectDestinationOnMap} activeOpacity={0.75}>
-                    <MapPinIcon size={14} color="#2563EB" />
-                    <Text style={styles.actionChipText}>Map</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
+      {/* Starting Location (From) */}
+      <View style={styles.fieldRow}>
+        <View style={styles.dotIndicatorStart} />
+        <View style={styles.fieldContent}>
+          <Text style={styles.fieldLabel}>From (Starting Point)</Text>
+          <TouchableOpacity
+            onPress={onOpenSourceSearch}
+            activeOpacity={0.8}
+            style={styles.locationTitleTouchable}
+          >
+            <Text style={styles.locationTitle} numberOfLines={1}>
+              {startNode ? startNode.name : 'Terminal 1 Main East Entrance (Default)'}
+            </Text>
+            <Text style={styles.locationSub}>
+              {startNode?.wheelchairAccessible ? 'Step-Free Verified' : 'Nearest station entrance gate'}
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={onOpenQrScan}
+          activeOpacity={0.7}
+          accessibilityLabel="Anchor position via QR"
+        >
+          <QrIcon size={16} color="#1A1A1A" />
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: Radii.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...Shadows.sm
-  },
-  inputsRow: {
+  searchBarContainer: {
     flexDirection: 'row',
-    alignItems: 'stretch'
-  },
-  timelineCol: {
-    width: 24,
     alignItems: 'center',
-    paddingVertical: 14,
-    marginRight: 10
-  },
-  startDotOuter: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#2563EB',
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  startDotInner: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#2563EB'
-  },
-  trackLine: {
-    flex: 1,
-    width: 2,
-    backgroundColor: '#CBD5E1',
+    gap: 8,
+    width: '100%',
     marginVertical: 4
   },
-  destDotOuter: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#059669',
-    backgroundColor: '#ECFDF5',
+  bigSearchBar: {
+    flex: 1,
+    height: 48,
+    backgroundColor: '#FAFAF7',
+    borderRadius: Radii.input, // 8px
+    borderWidth: 1,
+    borderColor: Colors.borderInput,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    gap: 10
+  },
+  searchPlaceholder: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '400',
+    flex: 1
+  },
+  qrScanBtn: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#FAFAF7',
+    borderRadius: Radii.input, // 8px
+    borderWidth: 1,
+    borderColor: Colors.borderInput,
     alignItems: 'center',
     justifyContent: 'center'
   },
-  destDotInner: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#059669'
+  expandedCard: {
+    backgroundColor: '#FAFAF7',
+    borderRadius: Radii.card, // 12px
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.sm,
+    marginVertical: 4
   },
-  fieldsCol: {
-    flex: 1
-  },
-  fieldWrapper: {
-    minHeight: 56
-  },
-  fieldHeader: {
+  fieldRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4
+    gap: 10
+  },
+  fieldContent: {
+    flex: 1
   },
   fieldLabel: {
-    fontSize: 10,
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginBottom: 2
+  },
+  locationTitleTouchable: {
+    paddingVertical: 2
+  },
+  destinationTitle: {
+    fontSize: 15,
     fontWeight: '700',
-    color: '#64748B',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase'
-  },
-  methodBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0'
-  },
-  methodBadgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#059669'
-  },
-  selectedLocationBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: Radii.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  selectedLocationTouchable: {
-    flex: 1
+    color: Colors.textPrimary
   },
   locationTitle: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A'
+    fontWeight: '600',
+    color: Colors.textPrimary
   },
   locationSub: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 2
+    fontSize: 12,
+    color: Colors.textSecondary
   },
-  clearBtn: {
-    padding: 6,
-    borderRadius: 6,
-    backgroundColor: '#F1F5F9'
+  dotIndicatorDestination: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.primary // Hero Golden Yellow
   },
-  emptyPromptRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    gap: 8
-  },
-  emptyPromptBtn: {
-    flex: 1,
-    paddingVertical: 4
-  },
-  placeholderText: {
-    fontSize: 13,
-    color: '#94A3B8',
-    fontWeight: '400'
-  },
-  quickSourceActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4
-  },
-  actionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radii.pill,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#CBD5E1'
-  },
-  actionChipText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#1E293B'
+  dotIndicatorStart: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#1A1A1A'
   },
   dividerRow: {
-    position: 'relative',
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center'
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 6,
+    paddingLeft: 20
   },
-  hairlineDivider: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
+  dividerLine: {
+    flex: 1,
     height: 1,
-    backgroundColor: '#E2E8F0'
+    backgroundColor: Colors.border
   },
   swapBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.sm
+    marginLeft: 8
   },
-  swapBtnDisabled: {
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC'
+  actionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 });

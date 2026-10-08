@@ -320,22 +320,25 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9'
   },
   categoryTab: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: Radii.pill,
-    backgroundColor: '#F1F5F9'
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   categoryTabSelected: {
-    backgroundColor: '#2563EB'
+    backgroundColor: Colors.primary, // Hero Golden Yellow
+    borderColor: Colors.primary
   },
   categoryTabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B'
+    color: Colors.textSecondary
   },
   categoryTabTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: '700'
+    color: '#1A1A1A',
+    fontWeight: '800'
   },
   listContent: {
     paddingHorizontal: Spacing.md,
@@ -346,16 +349,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: '#F5F5F2',
     gap: 12
   },
   itemIconContainer: {
     width: 38,
     height: 38,
     borderRadius: 8,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAFAF7',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -365,11 +368,11 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A'
+    color: Colors.textPrimary
   },
   itemBadge: {
     fontSize: 11,
-    color: '#64748B',
+    color: Colors.textSecondary,
     marginTop: 2
   },
   selectArrowBox: {

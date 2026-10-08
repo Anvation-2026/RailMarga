@@ -12,7 +12,12 @@ import { useNavigationStore } from '../store/navigationStore';
 import checkpointsData from '../data/simulation/checkpoints.json';
 import { localRouter } from '../services/localRouter';
 import { voiceService } from '../services/voiceService';
-import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
+import { Colors, Radii, Spacing } from '../theme/tokens';
+import {
+  QrIcon,
+  CheckIcon,
+  MapPinIcon
+} from '../components/Icons';
 
 interface QrScanScreenProps {
   onBack: () => void;
@@ -38,30 +43,33 @@ export const QrScanScreen: React.FC<QrScanScreenProps> = ({
         await calculateRoute();
       }
       Alert.alert(
-        "✓ Checkpoint Verified",
-        `Your position is anchored to:\n${cp.name}\nFloor: ${cp.level === -1 ? 'Level -1 (Subway)' : (cp.level === 1 ? 'Level 1 (FOB)' : 'Level 0 (Platform)')}`,
-        [{ text: "Continue Navigation", onPress: onLocationUpdated }]
+        "Checkpoint Verified",
+        `Your location is anchored to:\n${cp.name}\nFloor: ${cp.level === -1 ? 'Subway · Level -1' : (cp.level === 1 ? 'FOB · Level 1' : 'Concourse · Level 0')}`,
+        [{ text: "Continue navigation", onPress: onLocationUpdated }]
       );
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>SCAN CHECKPOINT</Text>
+        <Text style={styles.headerTitle}>Scan checkpoint</Text>
         <View style={{ width: 60 }} />
       </View>
 
+      {/* Info Notice Banner */}
       <View style={styles.banner}>
-        <Text style={styles.bannerTitle}>INDOOR POSITIONING CHECKPOINTS</Text>
+        <Text style={styles.bannerTitle}>Indoor pillar positioning</Text>
         <Text style={styles.bannerSub}>
-          GPS is unreliable inside covered railway platforms. Scan a RailMarga QR checkpoint or tap any pillar checkpoint below to update your location.
+          GPS signals fluctuate under station roofs. Scan a RailMarga QR code or tap any pillar checkpoint below to anchor your location.
         </Text>
       </View>
 
+      {/* Checkpoints List */}
       <FlatList
         data={checkpointsData}
         keyExtractor={(item: any) => item.id}
@@ -74,20 +82,26 @@ export const QrScanScreen: React.FC<QrScanScreenProps> = ({
               style={[styles.checkpointCard, isSelected && styles.checkpointCardActive]}
               onPress={() => handleSelectCheckpoint(item)}
               activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={`Anchor to ${item.name}`}
             >
               <View style={styles.qrIconBox}>
-                <Text style={styles.qrIcon}>📷</Text>
+                <QrIcon size={22} color="#1A1A1A" strokeWidth={1.75} />
                 <Text style={styles.qrCodeText}>{item.id}</Text>
               </View>
+
               <View style={{ flex: 1 }}>
                 <Text style={styles.cpName}>{item.name}</Text>
                 <Text style={styles.cpDesc}>{item.description}</Text>
                 <Text style={styles.cpLevel}>
-                  Floor: {item.level === -1 ? 'Level -1 (Subway)' : (item.level === 1 ? 'Level 1 (FOB)' : 'Level 0 (Platform)')}
+                  Floor: {item.level === -1 ? 'Subway (Level -1)' : item.level === 1 ? 'FOB (Level 1)' : 'Level 0'}
                 </Text>
               </View>
-              <View style={styles.scanBtn}>
-                <Text style={styles.scanBtnText}>Verify</Text>
+
+              <View style={[styles.verifyBtn, isSelected && styles.verifyBtnActive]}>
+                <Text style={[styles.verifyBtnText, isSelected && styles.verifyBtnTextActive]}>
+                  {isSelected ? 'Anchored' : 'Select'}
+                </Text>
               </View>
             </TouchableOpacity>
           );
@@ -100,119 +114,123 @@ export const QrScanScreen: React.FC<QrScanScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.bgSecondary
+    backgroundColor: Colors.bgPrimary
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
-    backgroundColor: Colors.bgPrimary,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border
+    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 12
   },
   backBtn: {
-    paddingVertical: 4
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: Radii.pill,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   backBtnText: {
-    color: Colors.textPrimary,
+    fontSize: 12,
     fontWeight: '600',
-    fontSize: 13
+    color: Colors.textPrimary
   },
   headerTitle: {
-    color: Colors.textPrimary,
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '700',
-    letterSpacing: 0.8
+    color: Colors.textPrimary
   },
   banner: {
-    backgroundColor: Colors.bgPrimary,
-    padding: Spacing.md,
-    marginHorizontal: Spacing.sm,
-    marginTop: Spacing.sm,
-    borderRadius: Radii.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.goldPrimary,
-    ...Shadows.sm
+    backgroundColor: '#FAFAF7',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    padding: Spacing.md
   },
   bannerTitle: {
-    color: Colors.goldDark,
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '700',
-    letterSpacing: 0.8
+    color: Colors.textPrimary,
+    marginBottom: 4
   },
   bannerSub: {
-    color: Colors.textSecondary,
     fontSize: 12,
-    marginTop: 4,
-    lineHeight: 17
+    color: Colors.textSecondary,
+    lineHeight: 18
   },
   list: {
-    padding: Spacing.sm,
-    gap: Spacing.xs + 2
+    padding: Spacing.md,
+    gap: Spacing.sm
   },
   checkpointCard: {
-    backgroundColor: Colors.bgPrimary,
-    borderRadius: Radii.md,
-    padding: Spacing.sm + 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.card, // 12px
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadows.sm
+    gap: 12
   },
   checkpointCardActive: {
-    borderColor: Colors.goldPrimary,
-    backgroundColor: Colors.goldTintSolid
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryTintSolid
   },
   qrIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: Radii.sm,
-    backgroundColor: Colors.bgSecondary,
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: '#FAFAF7',
     borderWidth: 1,
     borderColor: Colors.border,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center'
-  },
-  qrIcon: {
-    fontSize: 18
+    padding: 2
   },
   qrCodeText: {
-    color: Colors.textTertiary,
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: '700',
-    marginTop: 1
-  },
-  cpName: {
-    color: Colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '700'
-  },
-  cpDesc: {
     color: Colors.textSecondary,
-    fontSize: 11,
-    marginTop: 1
-  },
-  cpLevel: {
-    color: Colors.goldDark,
-    fontSize: 10,
-    fontWeight: '600',
     marginTop: 2
   },
-  scanBtn: {
-    backgroundColor: Colors.goldPrimary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 7,
-    borderRadius: Radii.sm
-  },
-  scanBtnText: {
-    color: Colors.charcoalPrimary,
+  cpName: {
+    fontSize: 14,
     fontWeight: '700',
-    fontSize: 12
+    color: Colors.textPrimary
+  },
+  cpDesc: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2
+  },
+  cpLevel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    marginTop: 3
+  },
+  verifyBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: Radii.pill,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  verifyBtnActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary
+  },
+  verifyBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textPrimary
+  },
+  verifyBtnTextActive: {
+    color: '#1A1A1A',
+    fontWeight: '800'
   }
 });

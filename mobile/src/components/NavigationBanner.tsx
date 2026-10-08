@@ -1,7 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { RouteResult, RouteStep } from '../services/localRouter';
-import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import { Colors, Radii, Spacing, Shadows } from '../theme/tokens';
+import {
+  ElevatorIcon,
+  RampIcon,
+  WalkIcon,
+  CheckIcon,
+  VolumeIcon,
+  CloseIcon,
+  AlertIcon,
+  ArrowRightIcon
+} from './Icons';
 
 interface NavigationBannerProps {
   route: RouteResult;
@@ -29,41 +39,44 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
   const isLast = steps.length > 0 ? currentStepIndex >= steps.length - 1 : true;
   const isFirst = currentStepIndex === 0;
 
-  const getStepIcon = (instruction: string, pathType: string) => {
+  const renderManeuverIcon = (instruction: string, pathType: string) => {
     const text = (instruction + ' ' + pathType).toLowerCase();
-    if (text.includes('lift') || text.includes('elevator')) return '🛗';
-    if (text.includes('ramp')) return '↗️';
-    if (text.includes('stair') || text.includes('steps')) return '🪜';
-    if (text.includes('left')) return '↖️';
-    if (text.includes('right')) return '↗️';
-    if (text.includes('arrive') || text.includes('platform')) return '🏁';
-    return '⬆️';
+    if (text.includes('lift') || text.includes('elevator')) {
+      return <ElevatorIcon size={22} color="#1A1A1A" strokeWidth={2} />;
+    }
+    if (text.includes('ramp')) {
+      return <RampIcon size={22} color="#1A1A1A" strokeWidth={2} />;
+    }
+    if (text.includes('arrive') || text.includes('platform')) {
+      return <CheckIcon size={22} color="#16A34A" strokeWidth={2.5} />;
+    }
+    return <WalkIcon size={22} color="#1A1A1A" strokeWidth={2} />;
   };
 
   return (
     <View style={styles.container}>
-      {/* Blockage Alert Banner if active */}
+      {/* Live Reroute Incident Banner */}
       {blockageAlert && (
         <View style={styles.blockageAlertBox}>
-          <Text style={styles.blockageAlertIcon}>🚧</Text>
+          <AlertIcon size={16} color="#DC2626" strokeWidth={2} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.blockageAlertTitle}>Live Route Re-routing</Text>
+            <Text style={styles.blockageAlertTitle}>Live rerouting active</Text>
             <Text style={styles.blockageAlertText}>{blockageAlert}</Text>
           </View>
         </View>
       )}
 
-      {/* Main Turn-by-Turn Maneuver Card (Google Maps / Uber HUD) */}
+      {/* Main Turn-by-Turn Guidance Card */}
       {currentStep && (
         <View style={styles.hudCard}>
           <View style={styles.hudTopRow}>
             <View style={styles.maneuverIconBox}>
-              <Text style={styles.maneuverIcon}>{getStepIcon(currentStep.instruction, currentStep.pathType)}</Text>
+              {renderManeuverIcon(currentStep.instruction, currentStep.pathType)}
             </View>
             <View style={styles.hudInstructionCol}>
               <View style={styles.distanceBadgeRow}>
                 <Text style={styles.distanceText}>
-                  {currentStep.distance > 0 ? `In ${currentStep.distance}m` : 'At location'}
+                  {currentStep.distance > 0 ? `In ${currentStep.distance} m` : 'At location'}
                 </Text>
                 <View style={styles.stepProgressPill}>
                   <Text style={styles.stepProgressText}>
@@ -89,7 +102,6 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
 
           {currentStep.landmark ? (
             <View style={styles.landmarkRow}>
-              <Text style={styles.landmarkIcon}>📍</Text>
               <Text style={styles.landmarkText} numberOfLines={1}>
                 Landmark: {currentStep.landmark}
               </Text>
@@ -110,8 +122,9 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
             style={[styles.actionBtn, voiceEnabled && styles.actionBtnActive]}
             onPress={onToggleVoice}
             activeOpacity={0.8}
+            accessibilityLabel={voiceEnabled ? "Mute voice guidance" : "Enable voice guidance"}
           >
-            <Text style={styles.actionBtnIcon}>{voiceEnabled ? '🔊' : '🔇'}</Text>
+            <VolumeIcon size={16} color={voiceEnabled ? '#1A1A1A' : '#73736C'} strokeWidth={1.75} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -119,17 +132,19 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
             onPress={onPreviousStep}
             disabled={isFirst}
             activeOpacity={0.8}
+            accessibilityLabel="Previous navigation step"
           >
-            <Text style={styles.stepBtnText}>◀</Text>
+            <Text style={[styles.stepBtnText, isFirst && styles.stepBtnTextDisabled]}>Prev</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.stepBtn, styles.nextStepBtn]}
             onPress={onAdvanceStep}
             activeOpacity={0.8}
+            accessibilityLabel={isLast ? "Arrived at destination" : "Next step"}
           >
             <Text style={styles.nextStepBtnText}>
-              {isLast ? 'Arrived ✓' : 'Next ▶'}
+              {isLast ? 'Arrived' : 'Next'}
             </Text>
           </TouchableOpacity>
 
@@ -137,8 +152,9 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
             style={styles.exitBtn}
             onPress={onStopNavigation}
             activeOpacity={0.8}
+            accessibilityLabel="Exit navigation guidance"
           >
-            <Text style={styles.exitBtnText}>✕</Text>
+            <CloseIcon size={14} color="#DC2626" strokeWidth={2} />
           </TouchableOpacity>
         </View>
       </View>
@@ -154,30 +170,29 @@ const styles = StyleSheet.create({
   blockageAlertBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
-    borderRadius: Radii.md,
+    gap: 8,
+    backgroundColor: '#FEF2F2',
+    borderRadius: Radii.card,
     padding: 10,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#F59E0B'
-  },
-  blockageAlertIcon: {
-    fontSize: 18,
-    marginRight: 8
+    borderColor: '#FECACA'
   },
   blockageAlertTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#92400E'
+    color: '#DC2626'
   },
   blockageAlertText: {
     fontSize: 11,
-    color: '#78350F'
+    color: '#991B1B'
   },
   hudCard: {
-    backgroundColor: '#1E293B',
-    borderRadius: Radii.lg,
-    padding: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 12,
     ...Shadows.floating
   },
   hudTopRow: {
@@ -185,102 +200,94 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   maneuverIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#0F172A',
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: '#FEF9E6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
     borderWidth: 1,
-    borderColor: '#334155'
-  },
-  maneuverIcon: {
-    fontSize: 24
+    borderColor: '#FDE68A'
   },
   hudInstructionCol: {
     flex: 1
   },
   distanceBadgeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 2
   },
   distanceText: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '800',
-    color: '#10B981',
-    letterSpacing: 0.3
+    color: Colors.textPrimary
   },
   stepProgressPill: {
-    backgroundColor: '#334155',
+    backgroundColor: '#FAFAF7',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6
+    borderRadius: Radii.pill,
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   stepProgressText: {
     fontSize: 10,
-    fontWeight: '700',
-    color: '#94A3B8'
+    fontWeight: '600',
+    color: Colors.textSecondary
   },
   instructionText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: '600',
+    color: Colors.textPrimary,
     lineHeight: 18
   },
   progressBarTrack: {
     height: 3,
-    backgroundColor: '#334155',
+    backgroundColor: '#E8E8E3',
     borderRadius: 2,
-    marginTop: 10,
-    marginBottom: 6,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    marginTop: 8
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#10B981'
+    backgroundColor: Colors.primary // Hero Golden Yellow
   },
   landmarkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4
-  },
-  landmarkIcon: {
-    fontSize: 11,
-    marginRight: 4
+    marginTop: 6,
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#F5F5F2'
   },
   landmarkText: {
     fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '500'
+    color: Colors.textSecondary
   },
   bottomBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.bgPrimary,
-    borderRadius: Radii.lg,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginTop: 8,
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.pill,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...Shadows.card
+    borderColor: Colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 6,
+    ...Shadows.floating
   },
   tripStats: {
-    justifyContent: 'center'
+    flex: 1
   },
   etaText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     color: Colors.textPrimary
   },
   remainingText: {
     fontSize: 11,
-    color: Colors.textSecondary,
-    fontWeight: '500'
+    color: Colors.textSecondary
   },
   actionsGroup: {
     flexDirection: 'row',
@@ -291,57 +298,54 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.bgSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#FAFAF7',
     borderWidth: 1,
-    borderColor: Colors.border
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   actionBtnActive: {
-    backgroundColor: Colors.goldTintSolid,
-    borderColor: Colors.goldPrimary
-  },
-  actionBtnIcon: {
-    fontSize: 16
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary
   },
   stepBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radii.sm,
-    backgroundColor: Colors.bgSecondary,
+    paddingHorizontal: 10,
+    height: 36,
+    borderRadius: Radii.pill,
+    backgroundColor: '#FAFAF7',
     borderWidth: 1,
-    borderColor: Colors.border
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   stepBtnDisabled: {
     opacity: 0.4
   },
   stepBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '600',
     color: Colors.textPrimary
   },
+  stepBtnTextDisabled: {
+    color: Colors.textSecondary
+  },
   nextStepBtn: {
-    backgroundColor: Colors.goldPrimary,
-    borderColor: Colors.goldPrimary
+    backgroundColor: Colors.primary, // Hero Golden Yellow
+    borderColor: Colors.primary
   },
   nextStepBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
-    color: '#FFFFFF'
+    color: '#1A1A1A'
   },
   exitBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FEE2E2',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: '#FCA5A5'
-  },
-  exitBtnText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#DC2626'
+    borderColor: '#FECACA',
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 });
