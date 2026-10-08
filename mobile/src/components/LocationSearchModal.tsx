@@ -13,6 +13,18 @@ import { StationNode, localRouter } from '../services/localRouter';
 import platformsData from '../data/station/platforms.json';
 import facilitiesData from '../data/station/facilities.json';
 import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import {
+  SearchIcon,
+  TrainIcon,
+  ElevatorIcon,
+  RestroomIcon,
+  WheelchairIcon,
+  MetroIcon,
+  TicketIcon,
+  MapPinIcon,
+  CloseIcon,
+  ArrowRightIcon
+} from './Icons';
 
 interface LocationSearchModalProps {
   visible: boolean;
@@ -34,7 +46,12 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
   const searchResults = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
 
-    let candidates: { node: StationNode; category: 'PLATFORMS' | 'FACILITIES' | 'ENTRANCES'; badgeText: string; icon: string }[] = [];
+    let candidates: {
+      node: StationNode;
+      category: 'PLATFORMS' | 'FACILITIES' | 'ENTRANCES';
+      badgeText: string;
+      iconType: 'train' | 'lift' | 'restroom' | 'accessible_wc' | 'metro' | 'ticket' | 'entrance';
+    }[] = [];
 
     // 1. Platforms
     for (const p of platformsData) {
@@ -43,8 +60,8 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
         candidates.push({
           node: { ...node, name: `Platform ${p.number}` },
           category: 'PLATFORMS',
-          badgeText: `Platform Level 0 • Train arrivals/departures`,
-          icon: '🚉'
+          badgeText: `Platform Level 0 • Boarding tracks`,
+          iconType: 'train'
         });
       }
     }
@@ -55,31 +72,30 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
         (f.type === 'LIFT' ? localRouter.nodeDict.get('node_pf8_lift1') :
         (f.type === 'TOILET' ? localRouter.nodeDict.get('node_t1_toilet') : null));
       if (node) {
-        let icon = '🏢';
-        if (f.type === 'LIFT') icon = '🛗';
-        else if (f.type === 'RAMP') icon = '↗️';
-        else if (f.type === 'TOILET') icon = '🚻';
-        else if (f.type === 'ACCESSIBLE_TOILET') icon = '♿';
-        else if (f.type === 'METRO_LINK') icon = '🚇';
-        else if (f.type === 'TICKET_COUNTER') icon = '🎫';
+        let iconType: 'train' | 'lift' | 'restroom' | 'accessible_wc' | 'metro' | 'ticket' | 'entrance' = 'entrance';
+        if (f.type === 'LIFT') iconType = 'lift';
+        else if (f.type === 'TOILET') iconType = 'restroom';
+        else if (f.type === 'ACCESSIBLE_TOILET') iconType = 'accessible_wc';
+        else if (f.type === 'METRO_LINK') iconType = 'metro';
+        else if (f.type === 'TICKET_COUNTER') iconType = 'ticket';
 
         candidates.push({
           node: { ...node, name: f.name },
           category: 'FACILITIES',
-          badgeText: `${f.level === -1 ? 'Subway Level' : (f.level === 1 ? 'FOB Level' : 'Concourse')} • ${f.accessibility?.wheelchairAccessible ? '♿ Step-Free' : 'Standard'}`,
-          icon
+          badgeText: `${f.level === -1 ? 'Subway' : (f.level === 1 ? 'FOB Level 1' : 'Concourse Level 0')} • ${f.accessibility?.wheelchairAccessible ? 'Step-Free' : 'Standard'}`,
+          iconType
         });
       }
     }
 
     // 3. Entrances & Terminals
     const entranceNodes = [
-      { id: 'node_entry_t1_main_east', name: 'Main Entrance (Terminal 1 - East Concourse)', icon: '🚪' },
-      { id: 'node_entry_t2_north', name: 'Terminal 2 Entrance (Okkalpuram Side)', icon: '🚪' },
-      { id: 'node_entry_t3_metro', name: 'Terminal 3 / Metro Link Concourse', icon: '🚇' },
-      { id: 'node_subway_entry_east', name: 'Majestic Passenger Subway Entrance', icon: '🚇' },
-      { id: 'node_t1_fob1_stair', name: 'FOB 1 (Mysuru End) Footbridge Access', icon: '🌉' },
-      { id: 'node_fob2_mid', name: 'FOB 2 (Okkalpuram End) Accessible Bridge', icon: '🌉' }
+      { id: 'node_entry_t1_main_east', name: 'Main Entrance (Terminal 1 - East Concourse)' },
+      { id: 'node_entry_t2_north', name: 'Terminal 2 Entrance (Okkalpuram Side)' },
+      { id: 'node_entry_t3_metro', name: 'Terminal 3 / Metro Link Concourse' },
+      { id: 'node_subway_entry_east', name: 'Majestic Passenger Subway Entrance' },
+      { id: 'node_t1_fob1_stair', name: 'FOB 1 (Mysuru End) Footbridge Access' },
+      { id: 'node_fob2_mid', name: 'FOB 2 (Okkalpuram End) Accessible Bridge' }
     ];
 
     for (const ent of entranceNodes) {
@@ -88,8 +104,8 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
         candidates.push({
           node: { ...node, name: ent.name },
           category: 'ENTRANCES',
-          badgeText: `${node.level === -1 ? 'Subway Level' : (node.level === 1 ? 'FOB Level' : 'Ground Concourse')}`,
-          icon: ent.icon
+          badgeText: `${node.level === -1 ? 'Subway' : (node.level === 1 ? 'FOB Level 1' : 'Ground Concourse')}`,
+          iconType: 'entrance'
         });
       }
     }
@@ -117,103 +133,113 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
     return candidates;
   }, [searchQuery, selectedCategory]);
 
+  const renderCandidateIcon = (type: string) => {
+    switch (type) {
+      case 'train': return <TrainIcon size={18} color="#2563EB" />;
+      case 'lift': return <ElevatorIcon size={18} color="#2563EB" />;
+      case 'restroom': return <RestroomIcon size={18} color="#059669" />;
+      case 'accessible_wc': return <WheelchairIcon size={18} color="#2563EB" />;
+      case 'metro': return <MetroIcon size={18} color="#7C3AED" />;
+      case 'ticket': return <TicketIcon size={18} color="#D97706" />;
+      case 'entrance': return <MapPinIcon size={18} color="#0F172A" />;
+      default: return <MapPinIcon size={18} color="#2563EB" />;
+    }
+  };
+
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <SafeAreaView style={styles.container}>
-        {/* Grab Handle */}
-        <View style={styles.handleRow}>
-          <View style={styles.handle} />
-        </View>
+        <View style={styles.modalContent}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.backBtn} activeOpacity={0.8}>
+              <Text style={styles.backBtnText}>← Back</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>
+              {mode === 'source' ? 'Select Starting Location' : 'Select Destination'}
+            </Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
+              <CloseIcon size={16} color="#64748B" />
+            </TouchableOpacity>
+          </View>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.backBtn} activeOpacity={0.8}>
-            <Text style={styles.backBtnText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>
-            {mode === 'source' ? 'Select Starting Point' : 'Select Destination'}
-          </Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
-            <Text style={styles.closeBtnText}>✕</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Search Input */}
+          <View style={styles.searchBar}>
+            <SearchIcon size={18} color="#64748B" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={mode === 'source' ? "Search gate, platform or concourse" : "Search platform 1-10, lift, restroom, or FOB"}
+              placeholderTextColor="#94A3B8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+                <CloseIcon size={14} color="#64748B" />
+              </TouchableOpacity>
+            )}
+          </View>
 
-        {/* Search Input (Zomato/Swiggy floating search input style) */}
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔎</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder={mode === 'source' ? "Search starting point (e.g. Platform 1, Gate)" : "Search destination (e.g. Platform 8, Lift 1, WC)"}
-            placeholderTextColor={Colors.textTertiary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoFocus
-            returnKeyType="search"
+          {/* Filter Categories Bar */}
+          <View style={styles.categoriesRow}>
+            {(['ALL', 'PLATFORMS', 'FACILITIES', 'ENTRANCES'] as const).map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.categoryTab,
+                  selectedCategory === cat && styles.categoryTabSelected
+                ]}
+                onPress={() => setSelectedCategory(cat)}
+                activeOpacity={0.75}
+              >
+                <Text style={[
+                  styles.categoryTabText,
+                  selectedCategory === cat && styles.categoryTabTextSelected
+                ]}>
+                  {cat === 'ALL' ? 'All' : (cat === 'PLATFORMS' ? 'Platforms' : (cat === 'FACILITIES' ? 'Lifts & WC' : 'Gates & FOB'))}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* List of Results */}
+          <FlatList
+            data={searchResults}
+            keyExtractor={(item, index) => `${item.category}_${item.node.id}_${index}`}
+            contentContainerStyle={styles.listContent}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.resultItem}
+                onPress={() => {
+                  onSelectNode(item.node);
+                  onClose();
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.itemIconContainer}>
+                  {renderCandidateIcon(item.iconType)}
+                </View>
+                <View style={styles.itemDetails}>
+                  <Text style={styles.itemName}>{item.node.name}</Text>
+                  <Text style={styles.itemBadge}>{item.badgeText}</Text>
+                </View>
+                <View style={styles.selectArrowBox}>
+                  <ArrowRightIcon size={14} color="#94A3B8" />
+                </View>
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <MapPinIcon size={28} color="#94A3B8" />
+                <Text style={styles.emptyText}>No verified location found for "{searchQuery}"</Text>
+                <Text style={styles.emptySub}>Try searching: Platform 8, Lift 1, Ramp, Restroom, or Main Entrance</Text>
+              </View>
+            }
           />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
-              <Text style={styles.clearBtnText}>✕</Text>
-            </TouchableOpacity>
-          )}
         </View>
-
-        {/* Filter Categories Bar */}
-        <View style={styles.categoriesRow}>
-          {(['ALL', 'PLATFORMS', 'FACILITIES', 'ENTRANCES'] as const).map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.categoryTab,
-                selectedCategory === cat && styles.categoryTabSelected
-              ]}
-              onPress={() => setSelectedCategory(cat)}
-              activeOpacity={0.75}
-            >
-              <Text style={[
-                styles.categoryTabText,
-                selectedCategory === cat && styles.categoryTabTextSelected
-              ]}>
-                {cat === 'ALL' ? 'All' : (cat === 'PLATFORMS' ? 'Platforms' : (cat === 'FACILITIES' ? 'Lifts & WC' : 'Gates & FOB'))}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* List of Results */}
-        <FlatList
-          data={searchResults}
-          keyExtractor={(item, index) => `${item.category}_${item.node.id}_${index}`}
-          contentContainerStyle={styles.listContent}
-          keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.resultItem}
-              onPress={() => {
-                onSelectNode(item.node);
-                onClose();
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.itemIconContainer}>
-                <Text style={styles.itemIcon}>{item.icon}</Text>
-              </View>
-              <View style={styles.itemDetails}>
-                <Text style={styles.itemName}>{item.node.name}</Text>
-                <Text style={styles.itemBadge}>{item.badgeText}</Text>
-              </View>
-              <View style={styles.selectArrowBox}>
-                <Text style={styles.selectArrow}>→</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>📍</Text>
-              <Text style={styles.emptyText}>No verified station location matches "{searchQuery}"</Text>
-              <Text style={styles.emptySub}>Try searching: Platform 8, Lift 1, Ramp, Restroom, or Main Entrance</Text>
-            </View>
-          }
-        />
       </SafeAreaView>
     </Modal>
   );
@@ -222,145 +248,116 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF'
+    backgroundColor: '#F8FAFC'
   },
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 4
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#CBD5E1'
+  modalContent: {
+    flex: 1,
+    maxWidth: 720,
+    width: '100%',
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: '#E2E8F0'
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9'
   },
   backBtn: {
     paddingVertical: 4,
     paddingHorizontal: 8,
-    backgroundColor: Colors.bgSecondary,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    borderColor: Colors.border
+    backgroundColor: '#F1F5F9',
+    borderRadius: Radii.sm
   },
   backBtnText: {
-    color: Colors.textPrimary,
+    color: '#334155',
     fontSize: 12,
     fontWeight: '700'
   },
-  closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.bgSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border
-  },
-  closeBtnText: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '700'
-  },
   title: {
-    color: Colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700'
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A'
+  },
+  closeBtn: {
+    padding: 6,
+    borderRadius: Radii.sm,
+    backgroundColor: '#F1F5F9'
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    marginHorizontal: Spacing.md,
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
+    backgroundColor: '#F8FAFC',
     borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: Spacing.xs
+    borderColor: '#E2E8F0',
+    marginHorizontal: Spacing.md,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    gap: 8
   },
   searchInput: {
     flex: 1,
-    height: 44,
+    paddingVertical: 12,
     fontSize: 14,
-    color: Colors.textPrimary,
-    fontWeight: '500'
+    color: '#0F172A'
   },
   clearBtn: {
     padding: 6
   },
-  clearBtnText: {
-    fontSize: 14,
-    color: Colors.textTertiary,
-    fontWeight: '700'
-  },
   categoriesRow: {
     flexDirection: 'row',
+    gap: 6,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 6,
-    gap: 6
-  },
-  categoryTab: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: Radii.pill,
-    backgroundColor: '#F8F9FA',
-    borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  categoryTabSelected: {
-    backgroundColor: Colors.goldTintSolid,
-    borderColor: Colors.goldPrimary
-  },
-  categoryTabText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.textSecondary
-  },
-  categoryTabTextSelected: {
-    color: Colors.goldDark,
-    fontWeight: '800'
-  },
-  listContent: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    paddingBottom: 40
-  },
-  resultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9'
   },
+  categoryTab: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radii.pill,
+    backgroundColor: '#F1F5F9'
+  },
+  categoryTabSelected: {
+    backgroundColor: '#2563EB'
+  },
+  categoryTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B'
+  },
+  categoryTabTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700'
+  },
+  listContent: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8
+  },
+  resultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    gap: 12
+  },
   itemIconContainer: {
     width: 38,
     height: 38,
-    borderRadius: 12,
-    backgroundColor: '#F8F9FA',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
+    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#E2E8F0'
-  },
-  itemIcon: {
-    fontSize: 18
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   itemDetails: {
     flex: 1
@@ -368,46 +365,32 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.textPrimary
+    color: '#0F172A'
   },
   itemBadge: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: '#64748B',
     marginTop: 2
   },
   selectArrowBox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#F8F9FA',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  selectArrow: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textSecondary
+    padding: 4
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: Spacing.lg
-  },
-  emptyIcon: {
-    fontSize: 32,
-    marginBottom: 8
+    paddingVertical: 48,
+    gap: 8
   },
   emptyText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: '#334155',
     textAlign: 'center'
   },
   emptySub: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: '#64748B',
     textAlign: 'center',
-    marginTop: 4
+    maxWidth: 320
   }
 });

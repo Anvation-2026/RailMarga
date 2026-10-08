@@ -5,7 +5,8 @@ import {
   Dimensions,
   TouchableOpacity,
   Text,
-  PanResponder
+  PanResponder,
+  Platform
 } from 'react-native';
 import Svg, {
   SvgXml,
@@ -29,6 +30,23 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAP_WIDTH = 3456;
 const MAP_HEIGHT = 1728;
 const ASPECT_RATIO = MAP_HEIGHT / MAP_WIDTH; // 0.5 (2:1 ratio)
+
+const isWeb = Platform.OS === 'web';
+
+// Cross-platform interactive props for SVG elements to prevent React DOM onStartShouldSetResponder warnings
+const getSvgActionProps = (handler?: () => void) => {
+  if (!handler) return {};
+  if (isWeb) {
+    return {
+      onClick: (e: any) => {
+        e?.stopPropagation?.();
+        handler();
+      },
+      style: { cursor: 'pointer' }
+    } as any;
+  }
+  return { onPress: handler };
+};
 
 // Memoized Base Station CAD Vector Layer from ksrsvg.svg
 const BaseStationMap = React.memo(() => {
@@ -85,11 +103,11 @@ export const KsrMap: React.FC<KsrMapProps> = ({
 
   const blockageStatuses = useBlockageStore((state) => state.statuses);
 
-  // Compute container dimensions
-  const containerWidth = isFullscreen ? SCREEN_WIDTH : SCREEN_WIDTH - 24;
+  // Compute container dimensions with responsive desktop bounds
+  const containerWidth = isFullscreen ? SCREEN_WIDTH : Math.min(SCREEN_WIDTH - 24, 1180);
   const containerHeight = isFullscreen
     ? Dimensions.get('window').height - 120
-    : Math.max(300, containerWidth * ASPECT_RATIO + 40);
+    : Math.min(Math.max(340, containerWidth * ASPECT_RATIO + 20), 480);
 
   // Base rendered dimensions maintaining exact 2:1 aspect ratio
   const baseScale = Math.min(containerWidth / MAP_WIDTH, (containerHeight - 40) / MAP_HEIGHT);
@@ -148,6 +166,13 @@ export const KsrMap: React.FC<KsrMapProps> = ({
     setZoomLevel(Math.max(1.2, targetZoom));
     setPanOffset({ x: offsetX, y: offsetY });
   }, [routeCoordinates, baseScale]);
+
+  // Auto-fit route whenever route coordinates change
+  useEffect(() => {
+    if (routeCoordinates && routeCoordinates.length > 0) {
+      handleFitRoute();
+    }
+  }, [routeCoordinates, handleFitRoute]);
 
   // Convert touch event to SVG coordinates (0 to 3456, 0 to 1728)
   const screenToSvgCoords = useCallback(
@@ -231,21 +256,23 @@ export const KsrMap: React.FC<KsrMapProps> = ({
 
   return (
     <View style={[styles.cardContainer, isFullscreen && styles.fullscreenContainer]}>
-      {/* Map Header Status & Mode Banner */}
-      <View style={styles.topBar}>
-        <View style={styles.titleInfo}>
-          <Text style={styles.titleText}>KSR BENGALURU STATION MAP</Text>
-          <Text style={styles.cadBadge}>ORIGINAL CAD VECTOR • VIEWBOX 3456×1728</Text>
-        </View>
+      {/* Map Header Status (Only in fullscreen mode) */}
+      {isFullscreen && (
+        <View style={styles.topBar}>
+          <View style={styles.titleInfo}>
+            <Text style={styles.titleText}>KSR BENGALURU STATION MAP</Text>
+            <Text style={styles.cadBadge}>ORIGINAL CAD VECTOR • VIEWBOX 3456×1728</Text>
+          </View>
 
-        <View style={styles.topRightActions}>
-          {onToggleFullscreen && (
-            <TouchableOpacity onPress={onToggleFullscreen} style={styles.fullscreenBtn} activeOpacity={0.8}>
-              <Text style={styles.fullscreenBtnText}>{isFullscreen ? '✕ Exit' : '⛶ Fullscreen'}</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.topRightActions}>
+            {onToggleFullscreen && (
+              <TouchableOpacity onPress={onToggleFullscreen} style={styles.fullscreenBtn} activeOpacity={0.8}>
+                <Text style={styles.fullscreenBtnText}>✕ Exit Fullscreen</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Mode Guidance Alert */}
       {selectionMode !== 'none' && (
@@ -446,51 +473,52 @@ export const KsrMap: React.FC<KsrMapProps> = ({
 
             {/* E. Interactive Platform Badges */}
             {platformsData.map((p) => {
+              const action = () => onSelectPlatform && onSelectPlatform(p);
               return (
                 <G key={p.id}>
                   {/* Left Badge */}
-                  <Circle
-                    cx={p.badgeLeft.x}
-                    cy={p.badgeLeft.y}
-                    r={isDetailedZoom ? 32 : 26}
-                    fill={Colors.goldPrimary}
-                    stroke={Colors.bgPrimary}
-                    strokeWidth="3.5"
-                    onPress={() => onSelectPlatform && onSelectPlatform(p)}
-                  />
-                  <SvgText
-                    x={p.badgeLeft.x}
-                    y={p.badgeLeft.y + 9}
-                    fill={Colors.textWhite}
-                    fontSize="24"
-                    fontWeight="900"
-                    textAnchor="middle"
-                    onPress={() => onSelectPlatform && onSelectPlatform(p)}
-                  >
-                    {p.number}
-                  </SvgText>
+                  <G {...getSvgActionProps(action)}>
+                    <Circle
+                      cx={p.badgeLeft.x}
+                      cy={p.badgeLeft.y}
+                      r={isDetailedZoom ? 32 : 26}
+                      fill={Colors.goldPrimary}
+                      stroke={Colors.bgPrimary}
+                      strokeWidth="3.5"
+                    />
+                    <SvgText
+                      x={p.badgeLeft.x}
+                      y={p.badgeLeft.y + 9}
+                      fill={Colors.textWhite}
+                      fontSize="24"
+                      fontWeight="900"
+                      textAnchor="middle"
+                    >
+                      {p.number}
+                    </SvgText>
+                  </G>
 
                   {/* Right Badge */}
-                  <Circle
-                    cx={p.badgeRight.x}
-                    cy={p.badgeRight.y}
-                    r={isDetailedZoom ? 32 : 26}
-                    fill={Colors.goldPrimary}
-                    stroke={Colors.bgPrimary}
-                    strokeWidth="3.5"
-                    onPress={() => onSelectPlatform && onSelectPlatform(p)}
-                  />
-                  <SvgText
-                    x={p.badgeRight.x}
-                    y={p.badgeRight.y + 9}
-                    fill={Colors.textWhite}
-                    fontSize="24"
-                    fontWeight="900"
-                    textAnchor="middle"
-                    onPress={() => onSelectPlatform && onSelectPlatform(p)}
-                  >
-                    {p.number}
-                  </SvgText>
+                  <G {...getSvgActionProps(action)}>
+                    <Circle
+                      cx={p.badgeRight.x}
+                      cy={p.badgeRight.y}
+                      r={isDetailedZoom ? 32 : 26}
+                      fill={Colors.goldPrimary}
+                      stroke={Colors.bgPrimary}
+                      strokeWidth="3.5"
+                    />
+                    <SvgText
+                      x={p.badgeRight.x}
+                      y={p.badgeRight.y + 9}
+                      fill={Colors.textWhite}
+                      fontSize="24"
+                      fontWeight="900"
+                      textAnchor="middle"
+                    >
+                      {p.number}
+                    </SvgText>
+                  </G>
 
                   {/* Platform Track Label */}
                   <SvgText
@@ -530,8 +558,10 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                 else if (f.type === 'METRO_LINK') iconChar = '🚇';
                 else if (f.type === 'TICKET_COUNTER') iconChar = '🎫';
 
+                const facilityAction = () => onSelectFacility && onSelectFacility(f);
+
                 return (
-                  <G key={f.id}>
+                  <G key={f.id} {...getSvgActionProps(facilityAction)}>
                     <Circle
                       cx={f.coordinates.x}
                       cy={f.coordinates.y}
@@ -539,7 +569,6 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                       fill={Colors.bgPrimary}
                       stroke={statusColor}
                       strokeWidth="3"
-                      onPress={() => onSelectFacility && onSelectFacility(f)}
                     />
                     <SvgText
                       x={f.coordinates.x}
@@ -548,7 +577,6 @@ export const KsrMap: React.FC<KsrMapProps> = ({
                       fontSize="18"
                       fontWeight="bold"
                       textAnchor="middle"
-                      onPress={() => onSelectFacility && onSelectFacility(f)}
                     >
                       {iconChar}
                     </SvgText>
@@ -639,14 +667,9 @@ export const KsrMap: React.FC<KsrMapProps> = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: Colors.bgPrimary,
-    borderRadius: Radii.hero,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginHorizontal: Spacing.sm,
-    marginVertical: Spacing.xs,
-    overflow: 'hidden',
-    ...Shadows.card
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.lg,
+    overflow: 'hidden'
   },
   fullscreenContainer: {
     marginHorizontal: 0,
@@ -700,14 +723,14 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary
   },
   selectionModeBanner: {
-    backgroundColor: Colors.goldTintSolid,
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs + 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.goldLight
+    borderBottomColor: '#BFDBFE'
   },
   selectionModeLeft: {
     flexDirection: 'row',
@@ -719,11 +742,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: Radii.pill,
-    backgroundColor: Colors.bgPrimary,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.goldPrimary
+    borderColor: '#2563EB'
   },
   selectionModeIcon: {
     fontSize: 14
@@ -731,7 +754,7 @@ const styles = StyleSheet.create({
   selectionModeTitle: {
     fontSize: 11,
     fontWeight: '700',
-    color: Colors.goldDark,
+    color: '#1D4ED8',
     letterSpacing: 0.6
   },
   selectionModeSub: {
@@ -800,15 +823,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     height: 32,
     borderRadius: Radii.sm,
-    backgroundColor: Colors.goldPrimary,
+    backgroundColor: '#2563EB',
     borderWidth: 1,
-    borderColor: Colors.goldDark,
+    borderColor: '#1D4ED8',
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.floating
   },
   controlLabelActive: {
-    color: Colors.charcoalPrimary,
+    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '700'
   },

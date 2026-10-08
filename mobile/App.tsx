@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { AssistantChatScreen } from './src/screens/AssistantChatScreen';
@@ -13,6 +13,8 @@ import { RouteResult } from './src/services/localRouter';
 type ScreenName = 'home' | 'assistant' | 'facilities' | 'platformDetail' | 'qrScan';
 
 export default function App() {
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 1024;
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('home');
   const [selectedPlatform, setSelectedPlatform] = useState<any>(null);
 
@@ -87,7 +89,7 @@ export default function App() {
     }
   };
 
-  const showBottomBar = !isNavigating && currentScreen !== 'platformDetail';
+  const showBottomBar = !isDesktop && !isNavigating && currentScreen !== 'platformDetail';
 
   return (
     <View style={styles.container}>

@@ -1,11 +1,19 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import {
+  WalkIcon,
+  WheelchairIcon,
+  SeniorIcon,
+  FamilyIcon,
+  AudioTactileIcon,
+  CheckIcon
+} from './Icons';
 
 export interface ProfileMeta {
   id: string;
   name: string;
-  icon: string;
+  iconType: 'walk' | 'wheelchair' | 'senior' | 'family' | 'audio';
   description: string;
   badge: string;
 }
@@ -14,35 +22,35 @@ export const PROFILES: ProfileMeta[] = [
   {
     id: 'first_time',
     name: 'Standard Walk',
-    icon: '🧭',
+    iconType: 'walk',
     description: 'Direct concourse corridors with landmarks',
     badge: 'Standard'
   },
   {
     id: 'mobility_disabled',
     name: 'Step-Free / ♿',
-    icon: '♿',
+    iconType: 'wheelchair',
     description: '100% elevators, lifts & gentle ramps only',
     badge: 'Step-Free'
   },
   {
     id: 'elderly',
     name: 'Senior Citizen',
-    icon: '👴',
+    iconType: 'senior',
     description: 'Gentle slopes, avoids stairs & long detours',
     badge: 'Low Fatigue'
   },
   {
     id: 'child',
-    name: 'Family / Child',
-    icon: '👦',
+    name: 'Family / Luggage',
+    iconType: 'family',
     description: 'Wide walking lanes & safety rail corridors',
-    badge: 'Safe Way'
+    badge: 'Safe Corridors'
   },
   {
     id: 'visually_impaired',
     name: 'Audio / Tactile',
-    icon: '👁️',
+    iconType: 'audio',
     description: 'Tactile paving corridors & voice alerts',
     badge: 'Tactile'
   }
@@ -57,11 +65,23 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
   selectedProfileId,
   onSelectProfile
 }) => {
+  const renderProfileIcon = (type: string, isSelected: boolean) => {
+    const color = isSelected ? '#2563EB' : '#475569';
+    switch (type) {
+      case 'walk': return <WalkIcon size={18} color={color} />;
+      case 'wheelchair': return <WheelchairIcon size={18} color={color} />;
+      case 'senior': return <SeniorIcon size={18} color={color} />;
+      case 'family': return <FamilyIcon size={18} color={color} />;
+      case 'audio': return <AudioTactileIcon size={18} color={color} />;
+      default: return <WalkIcon size={18} color={color} />;
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>TRAVEL & ACCESSIBILITY MODE</Text>
-        <Text style={styles.subtext}>Tailored routing</Text>
+        <Text style={styles.title}>ACCESSIBILITY & ROUTING PREFERENCES</Text>
+        <Text style={styles.subtext}>Personalized pathfinding</Text>
       </View>
       <ScrollView
         horizontal
@@ -83,12 +103,17 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
             >
               <View style={styles.cardTopRow}>
                 <View style={[styles.iconBox, isSelected && styles.iconBoxSelected]}>
-                  <Text style={styles.icon}>{p.icon}</Text>
+                  {renderProfileIcon(p.iconType, isSelected)}
                 </View>
                 <View style={[styles.badge, isSelected && styles.badgeSelected]}>
-                  <Text style={[styles.badgeText, isSelected && styles.badgeTextSelected]}>
-                    {isSelected ? '✓ ACTIVE' : p.badge}
-                  </Text>
+                  {isSelected ? (
+                    <View style={styles.activeBadgeContent}>
+                      <CheckIcon size={11} color="#2563EB" strokeWidth={3} />
+                      <Text style={styles.badgeTextSelected}>ACTIVE</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.badgeText}>{p.badge}</Text>
+                  )}
                 </View>
               </View>
 
@@ -109,47 +134,47 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm
+    width: '100%'
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.xs,
-    paddingHorizontal: 4
+    paddingHorizontal: 2
   },
   title: {
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase'
   },
   subtext: {
-    color: Colors.textTertiary,
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '500'
   },
   scrollContent: {
     flexDirection: 'row',
     gap: 8,
-    paddingRight: Spacing.sm,
     paddingVertical: 2
   },
   card: {
-    width: 160,
+    width: 154,
     borderRadius: Radii.md,
     padding: 12,
     ...Shadows.sm
   },
   cardUnselected: {
-    backgroundColor: Colors.bgPrimary,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#EAEAEA'
+    borderColor: '#E2E8F0'
   },
   cardSelected: {
-    backgroundColor: Colors.goldTintSolid,
-    borderWidth: 2,
-    borderColor: Colors.goldPrimary
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1.5,
+    borderColor: '#2563EB'
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -160,52 +185,56 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 32,
     height: 32,
-    borderRadius: 10,
-    backgroundColor: Colors.bgSecondary,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.borderLight
+    borderColor: '#E2E8F0'
   },
   iconBoxSelected: {
     backgroundColor: '#FFFFFF',
-    borderColor: Colors.goldPrimary
-  },
-  icon: {
-    fontSize: 16
+    borderColor: '#BFDBFE'
   },
   badge: {
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: Radii.pill,
-    backgroundColor: Colors.bgSecondary,
+    backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    borderColor: Colors.borderLight
+    borderColor: '#E2E8F0'
   },
   badgeSelected: {
-    backgroundColor: Colors.goldPrimary,
-    borderColor: Colors.goldPrimary
+    backgroundColor: '#DBEAFE',
+    borderColor: '#93C5FD'
+  },
+  activeBadgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3
   },
   badgeText: {
     fontSize: 9,
     fontWeight: '700',
-    color: Colors.textSecondary
+    color: '#64748B'
   },
   badgeTextSelected: {
-    color: '#FFFFFF'
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#1D4ED8'
   },
   name: {
     fontSize: 13,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: '#0F172A',
     marginBottom: 4
   },
   nameSelected: {
-    color: Colors.goldDark
+    color: '#1D4ED8'
   },
   description: {
-    fontSize: 10,
-    color: Colors.textSecondary,
-    lineHeight: 14
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 15
   }
 });

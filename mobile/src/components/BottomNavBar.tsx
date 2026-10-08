@@ -1,6 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
+import {
+  CompassIcon,
+  TrainIcon,
+  SparkleIcon,
+  QrIcon
+} from './Icons';
 
 export type TabKey = 'home' | 'facilities' | 'assistant' | 'qrScan';
 
@@ -12,18 +18,29 @@ interface BottomNavBarProps {
 interface TabItem {
   key: TabKey;
   label: string;
-  icon: string;
+  iconType: 'compass' | 'train' | 'ai' | 'qr';
   badge?: string;
 }
 
 const TABS: TabItem[] = [
-  { key: 'home', label: 'Explore', icon: '🧭' },
-  { key: 'facilities', label: 'Directory', icon: '🏢' },
-  { key: 'assistant', label: 'Assistant', icon: '💬', badge: 'AI' },
-  { key: 'qrScan', label: 'Scan QR', icon: '📷' }
+  { key: 'home', label: 'Navigation', iconType: 'compass' },
+  { key: 'facilities', label: 'Directory', iconType: 'train' },
+  { key: 'assistant', label: 'AI Concierge', iconType: 'ai', badge: 'AI' },
+  { key: 'qrScan', label: 'QR Scan', iconType: 'qr' }
 ];
 
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeTab, onSelectTab }) => {
+  const renderIcon = (type: string, isActive: boolean) => {
+    const color = isActive ? '#2563EB' : '#64748B';
+    switch (type) {
+      case 'compass': return <CompassIcon size={20} color={color} />;
+      case 'train': return <TrainIcon size={20} color={color} />;
+      case 'ai': return <SparkleIcon size={20} color={color} />;
+      case 'qr': return <QrIcon size={20} color={color} />;
+      default: return <CompassIcon size={20} color={color} />;
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.bar}>
@@ -37,7 +54,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeTab, onSelectT
               activeOpacity={0.75}
             >
               <View style={styles.iconWrapper}>
-                <Text style={styles.tabIcon}>{tab.icon}</Text>
+                {renderIcon(tab.iconType, isActive)}
                 {tab.badge && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{tab.badge}</Text>
@@ -58,44 +75,44 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeTab, onSelectT
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.bgPrimary,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingTop: 6,
-    paddingBottom: Platform.OS === 'ios' ? 22 : 8,
+    borderTopColor: '#E2E8F0',
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
     ...Shadows.floating
   },
   bar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
     paddingHorizontal: Spacing.sm
   },
   tabButton: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 4,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     borderRadius: Radii.md,
-    minWidth: 70
+    minWidth: 76
   },
   tabButtonActive: {
-    backgroundColor: Colors.goldTintSolid
+    backgroundColor: '#EFF6FF'
   },
   iconWrapper: {
     position: 'relative',
     alignItems: 'center',
-    justifyContent: 'center'
-  },
-  tabIcon: {
-    fontSize: 20,
-    marginBottom: 2
+    justifyContent: 'center',
+    marginBottom: 3
   },
   badge: {
     position: 'absolute',
-    top: -4,
-    right: -10,
-    backgroundColor: Colors.goldPrimary,
+    top: -5,
+    right: -12,
+    backgroundColor: '#2563EB',
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 6
@@ -108,18 +125,18 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: Colors.textSecondary,
+    color: '#64748B',
     letterSpacing: 0.1
   },
   tabLabelActive: {
-    color: Colors.goldDark,
+    color: '#1D4ED8',
     fontWeight: '700'
   },
   activeDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.goldPrimary,
-    marginTop: 2
+    backgroundColor: '#2563EB',
+    marginTop: 3
   }
 });

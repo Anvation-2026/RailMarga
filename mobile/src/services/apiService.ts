@@ -79,10 +79,11 @@ export class ApiService {
   public async getFacilities(category?: string, wheelchairOnly?: boolean): Promise<any[]> {
     if (this.isOnlineState) {
       try {
-        const url = new URL(`${this.backendBaseUrl}/api/facilities`);
-        if (category) url.searchParams.set('category', category);
-        if (wheelchairOnly) url.searchParams.set('wheelchair', 'true');
-        const res = await fetch(url.toString());
+        const queryParams: string[] = [];
+        if (category) queryParams.push(`category=${encodeURIComponent(category)}`);
+        if (wheelchairOnly) queryParams.push('wheelchair=true');
+        const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+        const res = await fetch(`${this.backendBaseUrl}/api/facilities${queryString}`);
         if (res.ok) return await res.json();
       } catch {}
     }

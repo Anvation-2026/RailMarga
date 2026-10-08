@@ -147,7 +147,8 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
       const nextIdx = currentStepIndex + 1;
       set({ currentStepIndex: nextIdx });
       if (voiceEnabled) {
-        voiceService.speak(activeRoute.steps[nextIdx].voiceText);
+        const step = activeRoute.steps[nextIdx];
+        voiceService.speak(step?.voiceText || step?.instruction || '');
       }
     } else {
       if (voiceEnabled) {
@@ -163,7 +164,8 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     const prevIdx = currentStepIndex - 1;
     set({ currentStepIndex: prevIdx });
     if (voiceEnabled) {
-      voiceService.speak(activeRoute.steps[prevIdx].voiceText);
+      const step = activeRoute.steps[prevIdx];
+      voiceService.speak(step?.voiceText || step?.instruction || '');
     }
   },
 
@@ -192,7 +194,8 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
       set({ activeRoute: newRoute, currentStepIndex: 0 });
       setTimeout(() => {
         if (voiceEnabled && newRoute.steps.length > 0) {
-          voiceService.speak(`Alternative route found. ${newRoute.steps[0].voiceText}`);
+          const firstStep = newRoute.steps[0];
+          voiceService.speak(`Alternative route found. ${firstStep?.voiceText || firstStep?.instruction || ''}`);
         }
       }, 2500);
     }
