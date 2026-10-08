@@ -17,13 +17,13 @@ export const Colors = {
   borderLight: '#EEEEEC',
   borderStrong: '#D1D1CB',
 
-  // Gold Brand & Accent Palette
-  goldPrimary: '#C9A227',
-  goldDark: '#9A7615',
-  goldLight: '#F5E9B8',
-  goldTint: 'rgba(201, 162, 39, 0.08)',
-  goldTintMedium: 'rgba(201, 162, 39, 0.16)',
-  goldTintSolid: '#FAF4E1',
+  // Professional Gold Yellow Brand & Accent Palette
+  goldPrimary: '#D4A017', // Rich Professional Gold Yellow
+  goldDark: '#A17409',    // Deep Burnished Gold for high-contrast text & borders
+  goldLight: '#FDE68A',   // Luminous Warm Golden Yellow for glowing accents
+  goldTint: 'rgba(212, 160, 23, 0.08)',
+  goldTintMedium: 'rgba(212, 160, 23, 0.16)',
+  goldTintSolid: '#FEF9C3', // Warm Ivory-Gold surface for selected states
 
   // Charcoal & Neutrals
   charcoalPrimary: '#171717',
@@ -51,8 +51,8 @@ export const Colors = {
   mapBg: '#F8F8F6',
   mapGrid: '#EBEBE6',
   platformTrack: '#80868B',
-  platformBadgeBg: '#FAF4E1',
-  platformBadgeBorder: '#C9A227',
+  platformBadgeBg: '#FEF9C3',
+  platformBadgeBorder: '#D4A017',
   platformBadgeText: '#171717'
 } as const;
 

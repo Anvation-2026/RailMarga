@@ -172,7 +172,7 @@ export const AssistantChatScreen: React.FC<AssistantChatScreenProps> = ({
             horizontal
             showsHorizontalScrollIndicator={false}
             data={quickPrompts}
-            keyExtractor={(item) => item}
+            keyExtractor={(item, index) => `${item}_${index}`}
             contentContainerStyle={{ paddingHorizontal: Spacing.sm, gap: Spacing.xs }}
             renderItem={({ item }) => (
               <TouchableOpacity

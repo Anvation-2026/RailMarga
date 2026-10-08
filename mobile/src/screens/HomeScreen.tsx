@@ -247,7 +247,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* 1. TOP HEADER */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.brandTitle}>RAILMARGA</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.brandTitle}>RAIL</Text>
+            <Text style={[styles.brandTitle, { color: Colors.goldPrimary }]}>MARGA</Text>
+          </View>
           <Text style={styles.brandSub}>KSR Bengaluru</Text>
         </View>
 

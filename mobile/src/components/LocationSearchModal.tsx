@@ -175,7 +175,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
         {/* List of Results */}
         <FlatList
           data={searchResults}
-          keyExtractor={(item) => item.node.id}
+          keyExtractor={(item, index) => `${item.category}_${item.node.id}_${index}`}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
             <TouchableOpacity
