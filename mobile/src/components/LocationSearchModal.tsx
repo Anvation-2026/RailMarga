@@ -12,7 +12,7 @@ import {
 import { StationNode, localRouter } from '../services/localRouter';
 import platformsData from '../data/station/platforms.json';
 import facilitiesData from '../data/station/facilities.json';
-import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
+import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
 
 interface LocationSearchModalProps {
   visible: boolean;
@@ -34,7 +34,6 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
   const searchResults = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
 
-    // Collect all candidates
     let candidates: { node: StationNode; category: 'PLATFORMS' | 'FACILITIES' | 'ENTRANCES'; badgeText: string; icon: string }[] = [];
 
     // 1. Platforms
@@ -44,7 +43,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
         candidates.push({
           node: { ...node, name: `Platform ${p.number}` },
           category: 'PLATFORMS',
-          badgeText: `PF ${p.number} • Level 0`,
+          badgeText: `Platform Level 0 • Train arrivals/departures`,
           icon: '🚉'
         });
       }
@@ -67,7 +66,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
         candidates.push({
           node: { ...node, name: f.name },
           category: 'FACILITIES',
-          badgeText: `${f.level === -1 ? 'Subway' : (f.level === 1 ? 'FOB Level' : 'Concourse')} • ${f.accessibility?.wheelchairAccessible ? '♿ Accessible' : 'Standard'}`,
+          badgeText: `${f.level === -1 ? 'Subway Level' : (f.level === 1 ? 'FOB Level' : 'Concourse')} • ${f.accessibility?.wheelchairAccessible ? '♿ Step-Free' : 'Standard'}`,
           icon
         });
       }
@@ -75,7 +74,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
 
     // 3. Entrances & Terminals
     const entranceNodes = [
-      { id: 'node_entry_t1_main_east', name: 'Main Entrance (Terminal 1 - Gubbi Thotadappa Rd)', icon: '🚪' },
+      { id: 'node_entry_t1_main_east', name: 'Main Entrance (Terminal 1 - East Concourse)', icon: '🚪' },
       { id: 'node_entry_t2_north', name: 'Terminal 2 Entrance (Okkalpuram Side)', icon: '🚪' },
       { id: 'node_entry_t3_metro', name: 'Terminal 3 / Metro Link Concourse', icon: '🚇' },
       { id: 'node_subway_entry_east', name: 'Majestic Passenger Subway Entrance', icon: '🚇' },
@@ -89,7 +88,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
         candidates.push({
           node: { ...node, name: ent.name },
           category: 'ENTRANCES',
-          badgeText: `${node.level === -1 ? 'Subway Level' : (node.level === 1 ? 'FOB Level' : 'Ground Level')}`,
+          badgeText: `${node.level === -1 ? 'Subway Level' : (node.level === 1 ? 'FOB Level' : 'Ground Concourse')}`,
           icon: ent.icon
         });
       }
@@ -121,25 +120,30 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <SafeAreaView style={styles.container}>
+        {/* Grab Handle */}
+        <View style={styles.handleRow}>
+          <View style={styles.handle} />
+        </View>
+
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.backBtn} activeOpacity={0.8}>
             <Text style={styles.backBtnText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>
-            {mode === 'source' ? 'SELECT START' : 'SELECT DESTINATION'}
+            {mode === 'source' ? 'Select Starting Point' : 'Select Destination'}
           </Text>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
             <Text style={styles.closeBtnText}>✕</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Search Input */}
+        {/* Search Input (Zomato/Swiggy floating search input style) */}
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔎</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder={mode === 'source' ? "Search starting point (e.g. Platform 1, Main Entrance)" : "Search destination (e.g. Platform 8, Lift 1, WC)"}
+            placeholder={mode === 'source' ? "Search starting point (e.g. Platform 1, Gate)" : "Search destination (e.g. Platform 8, Lift 1, WC)"}
             placeholderTextColor={Colors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -153,7 +157,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
           )}
         </View>
 
-        {/* Categories Bar */}
+        {/* Filter Categories Bar */}
         <View style={styles.categoriesRow}>
           {(['ALL', 'PLATFORMS', 'FACILITIES', 'ENTRANCES'] as const).map((cat) => (
             <TouchableOpacity
@@ -163,12 +167,13 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
                 selectedCategory === cat && styles.categoryTabSelected
               ]}
               onPress={() => setSelectedCategory(cat)}
+              activeOpacity={0.75}
             >
               <Text style={[
                 styles.categoryTabText,
                 selectedCategory === cat && styles.categoryTabTextSelected
               ]}>
-                {cat === 'ALL' ? 'All' : (cat === 'PLATFORMS' ? 'Platforms' : (cat === 'FACILITIES' ? 'Lifts & WC' : 'Gates'))}
+                {cat === 'ALL' ? 'All' : (cat === 'PLATFORMS' ? 'Platforms' : (cat === 'FACILITIES' ? 'Lifts & WC' : 'Gates & FOB'))}
               </Text>
             </TouchableOpacity>
           ))}
@@ -179,6 +184,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
           data={searchResults}
           keyExtractor={(item, index) => `${item.category}_${item.node.id}_${index}`}
           contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.resultItem}
@@ -195,7 +201,9 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
                 <Text style={styles.itemName}>{item.node.name}</Text>
                 <Text style={styles.itemBadge}>{item.badgeText}</Text>
               </View>
-              <Text style={styles.selectArrow}>→</Text>
+              <View style={styles.selectArrowBox}>
+                <Text style={styles.selectArrow}>→</Text>
+              </View>
             </TouchableOpacity>
           )}
           ListEmptyComponent={
@@ -214,16 +222,27 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bgPrimary
+    backgroundColor: '#FFFFFF'
+  },
+  handleRow: {
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 4
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1'
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.xs + 2,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border
+    borderBottomColor: '#F1F5F9'
   },
   backBtn: {
     paddingVertical: 4,
@@ -236,32 +255,39 @@ const styles = StyleSheet.create({
   backBtnText: {
     color: Colors.textPrimary,
     fontSize: 12,
-    fontWeight: '600'
+    fontWeight: '700'
   },
   closeBtn: {
-    padding: Spacing.xs
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.bgSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border
   },
   closeBtnText: {
-    color: Colors.textPrimary,
-    fontSize: 18,
+    color: Colors.textSecondary,
+    fontSize: 13,
     fontWeight: '700'
   },
   title: {
     color: Colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.8
+    fontSize: 15,
+    fontWeight: '700'
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.bgSecondary,
-    borderRadius: Radii.md,
+    backgroundColor: '#F8F9FA',
     marginHorizontal: Spacing.md,
-    marginVertical: Spacing.sm,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
     paddingHorizontal: Spacing.sm,
+    borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: Colors.border
+    borderColor: '#E2E8F0'
   },
   searchIcon: {
     fontSize: 16,
@@ -270,65 +296,68 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 44,
+    fontSize: 14,
     color: Colors.textPrimary,
-    fontSize: 14
+    fontWeight: '500'
   },
   clearBtn: {
     padding: 6
   },
   clearBtnText: {
-    color: Colors.textTertiary,
     fontSize: 14,
+    color: Colors.textTertiary,
     fontWeight: '700'
   },
   categoriesRow: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.md,
-    gap: Spacing.xs,
-    marginBottom: Spacing.sm
+    paddingVertical: 6,
+    gap: 6
   },
   categoryTab: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: Radii.pill,
-    backgroundColor: Colors.bgSecondary,
+    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: Colors.borderLight
+    borderColor: '#E2E8F0'
   },
   categoryTabSelected: {
     backgroundColor: Colors.goldTintSolid,
     borderColor: Colors.goldPrimary
   },
   categoryTabText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: Colors.textSecondary
   },
   categoryTabTextSelected: {
     color: Colors.goldDark,
-    fontWeight: '700'
+    fontWeight: '800'
   },
   listContent: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.xxl
+    paddingVertical: Spacing.xs,
+    paddingBottom: 40
   },
   resultItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight
+    borderBottomColor: '#F1F5F9'
   },
   itemIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: Radii.pill,
-    backgroundColor: Colors.bgSecondary,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#F8F9FA',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.sm,
+    marginRight: 12,
     borderWidth: 1,
-    borderColor: Colors.borderLight
+    borderColor: '#E2E8F0'
   },
   itemIcon: {
     fontSize: 18
@@ -338,7 +367,7 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textPrimary
   },
   itemBadge: {
@@ -346,31 +375,39 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 2
   },
+  selectArrowBox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F8F9FA',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   selectArrow: {
-    fontSize: 16,
-    color: Colors.textTertiary,
-    marginLeft: Spacing.xs
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textSecondary
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xxxl,
-    paddingHorizontal: Spacing.xl
+    paddingVertical: 40,
+    paddingHorizontal: Spacing.lg
   },
   emptyIcon: {
     fontSize: 32,
-    marginBottom: Spacing.xs
+    marginBottom: 8
   },
   emptyText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 4
+    textAlign: 'center'
   },
   emptySub: {
     fontSize: 12,
     color: Colors.textSecondary,
-    textAlign: 'center'
+    textAlign: 'center',
+    marginTop: 4
   }
 });

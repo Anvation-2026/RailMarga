@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
+import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
 
 export interface ProfileMeta {
   id: string;
@@ -13,38 +13,38 @@ export interface ProfileMeta {
 export const PROFILES: ProfileMeta[] = [
   {
     id: 'first_time',
-    name: 'First-Time Traveller',
+    name: 'Standard Walk',
     icon: '🧭',
-    description: 'Simple and clear routes with landmarks',
+    description: 'Direct concourse corridors with landmarks',
     badge: 'Standard'
   },
   {
+    id: 'mobility_disabled',
+    name: 'Step-Free / ♿',
+    icon: '♿',
+    description: '100% elevators, lifts & gentle ramps only',
+    badge: 'Step-Free'
+  },
+  {
     id: 'elderly',
-    name: 'Elderly Person',
+    name: 'Senior Citizen',
     icon: '👴',
-    description: 'Gentle slopes, avoids stairs & lifts',
+    description: 'Gentle slopes, avoids stairs & long detours',
     badge: 'Low Fatigue'
   },
   {
     id: 'child',
-    name: 'Child / Kid',
+    name: 'Family / Child',
     icon: '👦',
-    description: 'Direct paths & safety rail corridors',
+    description: 'Wide walking lanes & safety rail corridors',
     badge: 'Safe Way'
   },
   {
     id: 'visually_impaired',
-    name: 'Visually Impaired',
+    name: 'Audio / Tactile',
     icon: '👁️',
-    description: 'Tactile paving & spoken audio guide',
-    badge: 'Tactile Audio'
-  },
-  {
-    id: 'mobility_disabled',
-    name: 'Mobility Disabled',
-    icon: '♿',
-    description: '100% step-free accessible routes',
-    badge: 'Step-Free'
+    description: 'Tactile paving corridors & voice alerts',
+    badge: 'Tactile'
   }
 ];
 
@@ -60,8 +60,8 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>ACCESSIBILITY PROFILE</Text>
-        <Text style={styles.subtext}>Prioritizes matching paths</Text>
+        <Text style={styles.title}>TRAVEL & ACCESSIBILITY MODE</Text>
+        <Text style={styles.subtext}>Tailored routing</Text>
       </View>
       <ScrollView
         horizontal
@@ -75,41 +75,27 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
             <TouchableOpacity
               key={p.id}
               style={[
-                styles.profileCard,
-                isSelected ? styles.profileCardSelected : styles.profileCardUnselected
+                styles.card,
+                isSelected ? styles.cardSelected : styles.cardUnselected
               ]}
               onPress={() => onSelectProfile(p.id)}
               activeOpacity={0.8}
             >
               <View style={styles.cardTopRow}>
-                <Text style={styles.profileIcon}>{p.icon}</Text>
-                {isSelected ? (
-                  <View style={styles.selectedPill}>
-                    <Text style={styles.selectedPillText}>✓ Selected</Text>
-                  </View>
-                ) : (
-                  <View style={styles.badgePill}>
-                    <Text style={styles.badgeText}>{p.badge}</Text>
-                  </View>
-                )}
+                <View style={[styles.iconBox, isSelected && styles.iconBoxSelected]}>
+                  <Text style={styles.icon}>{p.icon}</Text>
+                </View>
+                <View style={[styles.badge, isSelected && styles.badgeSelected]}>
+                  <Text style={[styles.badgeText, isSelected && styles.badgeTextSelected]}>
+                    {isSelected ? '✓ ACTIVE' : p.badge}
+                  </Text>
+                </View>
               </View>
 
-              <Text
-                style={[
-                  styles.profileName,
-                  isSelected && styles.profileNameSelected
-                ]}
-              >
+              <Text style={[styles.name, isSelected && styles.nameSelected]} numberOfLines={1}>
                 {p.name}
               </Text>
-
-              <Text
-                style={[
-                  styles.profileDesc,
-                  isSelected && styles.profileDescSelected
-                ]}
-                numberOfLines={2}
-              >
+              <Text style={styles.description} numberOfLines={2}>
                 {p.description}
               </Text>
             </TouchableOpacity>
@@ -122,99 +108,104 @@ export const ProfilePicker: React.FC<ProfilePickerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: Spacing.xs + 2
+    marginVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'baseline',
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.xs
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+    paddingHorizontal: 4
   },
   title: {
-    fontSize: 11,
-    fontWeight: '700',
     color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
     letterSpacing: 0.8
   },
   subtext: {
+    color: Colors.textTertiary,
     fontSize: 11,
-    color: Colors.textTertiary
+    fontWeight: '500'
   },
   scrollContent: {
-    paddingHorizontal: Spacing.sm,
-    gap: Spacing.xs + 2
+    flexDirection: 'row',
+    gap: 8,
+    paddingRight: Spacing.sm,
+    paddingVertical: 2
   },
-  profileCard: {
-    width: 168,
+  card: {
+    width: 160,
     borderRadius: Radii.md,
-    padding: Spacing.sm,
-    justifyContent: 'space-between',
-    minHeight: 120
-  },
-  profileCardUnselected: {
-    backgroundColor: Colors.bgPrimary,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    padding: 12,
     ...Shadows.sm
   },
-  profileCardSelected: {
+  cardUnselected: {
+    backgroundColor: Colors.bgPrimary,
+    borderWidth: 1,
+    borderColor: '#EAEAEA'
+  },
+  cardSelected: {
     backgroundColor: Colors.goldTintSolid,
-    borderWidth: 1.5,
-    borderColor: Colors.goldPrimary,
-    ...Shadows.card
+    borderWidth: 2,
+    borderColor: Colors.goldPrimary
   },
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs
+    marginBottom: 8
   },
-  profileIcon: {
-    fontSize: 22
-  },
-  badgePill: {
-    backgroundColor: Colors.bgSurface,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: Radii.sm,
+  iconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: Colors.bgSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: Colors.borderLight
   },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: Colors.textSecondary
-  },
-  selectedPill: {
-    backgroundColor: Colors.bgPrimary,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
+  iconBoxSelected: {
+    backgroundColor: '#FFFFFF',
     borderColor: Colors.goldPrimary
   },
-  selectedPillText: {
-    fontSize: 10,
+  icon: {
+    fontSize: 16
+  },
+  badge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radii.pill,
+    backgroundColor: Colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: Colors.borderLight
+  },
+  badgeSelected: {
+    backgroundColor: Colors.goldPrimary,
+    borderColor: Colors.goldPrimary
+  },
+  badgeText: {
+    fontSize: 9,
     fontWeight: '700',
+    color: Colors.textSecondary
+  },
+  badgeTextSelected: {
+    color: '#FFFFFF'
+  },
+  name: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 4
+  },
+  nameSelected: {
     color: Colors.goldDark
   },
-  profileName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    marginBottom: 3
-  },
-  profileNameSelected: {
-    color: Colors.charcoalPrimary,
-    fontWeight: '700'
-  },
-  profileDesc: {
-    fontSize: 11,
+  description: {
+    fontSize: 10,
     color: Colors.textSecondary,
-    lineHeight: 15
-  },
-  profileDescSelected: {
-    color: Colors.charcoalPrimary
+    lineHeight: 14
   }
 });

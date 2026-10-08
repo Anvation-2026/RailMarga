@@ -21,7 +21,7 @@ import { NavigationBanner } from '../components/NavigationBanner';
 import { BlockageModal } from '../components/BlockageModal';
 import { useNavigationStore } from '../store/navigationStore';
 import { StationNode, localRouter, Coordinates } from '../services/localRouter';
-import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
+import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
 
 interface HomeScreenProps {
   onOpenAssistant: () => void;
@@ -29,6 +29,8 @@ interface HomeScreenProps {
   onOpenPlatformDetail: (platform: any) => void;
   onOpenQrScan: () => void;
 }
+
+const PLATFORMS_LIST = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenAssistant,
@@ -84,11 +86,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   // Handle Location Selection from Search
-  const handleSelectLocation = (node: StationNode) => {
+  const handleSelectLocation = async (node: StationNode) => {
     if (searchMode === 'source') {
       setStartNode(node, 'SEARCH');
     } else {
       setDestinationNode(node, 'SEARCH');
+      if (!startNode) {
+        const defaultStart = localRouter.nodeDict.get('node_entry_t1_main_east');
+        if (defaultStart) {
+          setStartNode(defaultStart, 'SEARCH');
+        }
+      }
+    }
+  };
+
+  // Quick 1-tap Platform Selector (like train/terminal selector in travel apps)
+  const handleQuickPlatformSelect = async (pfNumber: number) => {
+    const pfNode = localRouter.nodeDict.get(`node_pf${pfNumber}_center`) || localRouter.nodeDict.get(`node_pf${pfNumber}_west`);
+    if (pfNode) {
+      setDestinationNode(pfNode, 'PLATFORM');
+      if (!startNode) {
+        const defaultStart = localRouter.nodeDict.get('node_entry_t1_main_east');
+        if (defaultStart) {
+          setStartNode(defaultStart, 'SEARCH');
+        }
+      }
+      await calculateRoute();
     }
   };
 
@@ -129,7 +152,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       name: `Platform ${platform.number}`,
       level: 0,
       wheelchairAccessible: true,
-      details: `Track bed and walking surface for Platform ${platform.number}. Serves passenger train arrivals/departures.`,
+      details: `Track bed and passenger boarding surface for Platform ${platform.number}. Serves departures and arrivals.`,
       node
     });
   };
@@ -150,7 +173,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   // Quick action badges handler
-  const handleQuickAction = (category: string) => {
+  const handleQuickAction = async (category: string) => {
     let targetNode: StationNode | undefined;
     if (category === 'LIFT') {
       targetNode = localRouter.nodeDict.get('node_pf8_lift1') || localRouter.nodeDict.get('node_lift1');
@@ -167,31 +190,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     if (targetNode) {
       setDestinationNode(targetNode, 'FACILITY');
       if (!startNode) {
-        Alert.alert(
-          "Destination Chosen",
-          `Destination set to: ${targetNode.name}.\n\nPlease choose your starting point to begin navigation!`,
-          [
-            { text: "Choose Starting Point", onPress: () => handleOpenSearch('source') },
-            { text: "OK" }
-          ]
-        );
+        const defaultStart = localRouter.nodeDict.get('node_entry_t1_main_east');
+        if (defaultStart) {
+          setStartNode(defaultStart, 'SEARCH');
+        }
       }
+      await calculateRoute();
     }
   };
 
   // Handle primary "FIND ROUTE" action
   const handleFindRoute = async () => {
-    if (!startNode && !destinationNode) {
-      handleOpenSearch('destination');
-      return;
-    }
     if (!destinationNode) {
       handleOpenSearch('destination');
       return;
     }
     if (!startNode) {
-      handleOpenSearch('source');
-      return;
+      const defaultStart = localRouter.nodeDict.get('node_entry_t1_main_east');
+      if (defaultStart) {
+        setStartNode(defaultStart, 'SEARCH');
+      } else {
+        handleOpenSearch('source');
+        return;
+      }
     }
     await calculateRoute();
   };
@@ -202,12 +223,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <SafeAreaView style={styles.fullscreenSafe}>
         <StatusBar barStyle="dark-content" backgroundColor={Colors.bgPrimary} />
         <View style={styles.fullscreenHeader}>
-          <TouchableOpacity onPress={() => setIsFullscreenMap(false)} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => setIsFullscreenMap(false)} style={styles.backBtn} activeOpacity={0.8}>
             <Text style={styles.backBtnText}>← Back to Overview</Text>
           </TouchableOpacity>
-          <Text style={styles.fullscreenTitle}>KSR Interactive Map</Text>
-          <TouchableOpacity onPress={() => setDemoModalVisible(true)} style={styles.demoPill}>
-            <Text style={styles.demoPillText}>⚡ Demo</Text>
+          <Text style={styles.fullscreenTitle}>Interactive Station Map</Text>
+          <TouchableOpacity onPress={() => setDemoModalVisible(true)} style={styles.demoPill} activeOpacity={0.8}>
+            <Text style={styles.demoPillText}>⚡ Alerts</Text>
           </TouchableOpacity>
         </View>
 
@@ -245,7 +266,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.bgPrimary} />
 
-      {/* 1. TOP HEADER (Switches to Navigation Header with Back button during navigation) */}
+      {/* TOP APP BAR (Zomato/Swiggy/Uber Caliber Header) */}
       {isNavigating && activeRoute ? (
         <View style={styles.navHeader}>
           <TouchableOpacity
@@ -260,7 +281,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               {activeRoute.destination.name}
             </Text>
             <Text style={styles.navHeaderStats}>
-              {activeRoute.estimatedTimeMinutes} min • {activeRoute.totalDistanceMeters}m
+              {activeRoute.estimatedTimeMinutes} min • {activeRoute.totalDistanceMeters}m • Step {currentStepIndex + 1}/{activeRoute.steps.length}
             </Text>
           </View>
           <TouchableOpacity
@@ -273,29 +294,33 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </View>
       ) : (
         <View style={styles.header}>
+          {/* Logo & Location Dropdown */}
           <View style={styles.brandContainer}>
             <Image
               source={require('../../assets/railmarga-logo.png')}
               style={styles.brandLogo}
               resizeMode="contain"
             />
-            <Text style={styles.brandSub}>KSR Bengaluru</Text>
+            <View style={styles.locationDropdown}>
+              <Text style={styles.locationText} numberOfLines={1}>
+                📍 KSR Bengaluru • Main Concourse ▾
+              </Text>
+            </View>
           </View>
 
+          {/* Right Header Status & Alerts */}
           <View style={styles.headerRight}>
-            {/* Online/Offline indicator pill */}
             <View style={[styles.statusPill, isOnline ? styles.statusOnline : styles.statusOffline]}>
-              <View style={[styles.statusDot, { backgroundColor: isOnline ? Colors.success : Colors.warning }]} />
-              <Text style={styles.statusPillText}>{isOnline ? 'Online' : 'Offline'}</Text>
+              <View style={[styles.statusDot, { backgroundColor: isOnline ? '#10B981' : Colors.warning }]} />
+              <Text style={styles.statusPillText}>{isOnline ? 'Live' : 'Offline'}</Text>
             </View>
 
-            {/* Sandbox Demo Launcher */}
             <TouchableOpacity
-              style={styles.demoPill}
+              style={styles.alertsPill}
               onPress={() => setDemoModalVisible(true)}
               activeOpacity={0.8}
             >
-              <Text style={styles.demoPillText}>⚡ Conditions</Text>
+              <Text style={styles.alertsPillText}>⚡ Alerts</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -306,59 +331,100 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* 2. GREETING & MAIN SEARCH BAR */}
+        {/* FLOATING "WHERE TO?" SEARCH PILL (Uber / Blinkit Style) */}
         <View style={styles.searchSection}>
-          <Text style={styles.greetingText}>Where do you want to go?</Text>
           <TouchableOpacity
-            style={styles.searchField}
+            style={styles.floatingSearchBar}
             onPress={() => handleOpenSearch('destination')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.searchFieldIcon}>🔎</Text>
-            <Text style={styles.searchFieldPlaceholder}>Search platform, facility or location</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 3. YOUR JOURNEY (SOURCE + DESTINATION CARD) */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionHeaderTitle}>YOUR JOURNEY</Text>
-        </View>
-
-        <NavigationInputCard
-          startNode={startNode}
-          destinationNode={destinationNode}
-          sourceMethod={sourceMethod}
-          destinationMethod={destinationMethod}
-          onOpenSourceSearch={() => handleOpenSearch('source')}
-          onOpenDestinationSearch={() => handleOpenSearch('destination')}
-          onSelectSourceOnMap={() => handleStartMapSelection('source')}
-          onSelectDestinationOnMap={() => handleStartMapSelection('destination')}
-          onOpenQrScan={onOpenQrScan}
-          onSwap={swapSourceAndDestination}
-          onClearSource={() => setStartNode(null)}
-          onClearDestination={() => setDestinationNode(null)}
-        />
-
-        {/* Primary Action Button: FIND ROUTE */}
-        <View style={styles.findRouteWrapper}>
-          <TouchableOpacity
-            style={styles.findRouteBtn}
-            onPress={handleFindRoute}
             activeOpacity={0.85}
           >
-            <Text style={styles.findRouteBtnText}>FIND ROUTE</Text>
+            <View style={styles.searchIconBox}>
+              <Text style={styles.searchIconText}>🔎</Text>
+            </View>
+            <View style={styles.searchTextBox}>
+              <Text style={styles.searchMainTitle}>Where are you heading?</Text>
+              <Text style={styles.searchSubtitle}>Platform 1-10, Restroom, Lift, Metro FOB...</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.qrShortcutBtn}
+              onPress={onOpenQrScan}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.qrShortcutIcon}>📷</Text>
+              <Text style={styles.qrShortcutText}>Scan</Text>
+            </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
-        {/* 4. ACCESSIBILITY PROFILES */}
+        {/* QUICK PLATFORM STRIP (1 to 10 Instant Selector) */}
+        <View style={styles.platformStripSection}>
+          <View style={styles.platformStripHeader}>
+            <Text style={styles.sectionTitle}>QUICK PLATFORM SELECTION</Text>
+            <Text style={styles.sectionSubtitle}>1-Tap Routing</Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.platformStripScroll}
+          >
+            {PLATFORMS_LIST.map((pfNum) => {
+              const isSelected = destinationNode?.name.includes(`Platform ${pfNum}`);
+              return (
+                <TouchableOpacity
+                  key={pfNum}
+                  style={[styles.platformChip, isSelected && styles.platformChipActive]}
+                  onPress={() => handleQuickPlatformSelect(pfNum)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[styles.platformChipNumber, isSelected && styles.platformChipNumberActive]}>
+                    PF {pfNum}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* JOURNEY PLANNER CARD (Uber / Ola Ride Booking Card) */}
+        <View style={styles.journeySection}>
+          <NavigationInputCard
+            startNode={startNode}
+            destinationNode={destinationNode}
+            sourceMethod={sourceMethod}
+            destinationMethod={destinationMethod}
+            onOpenSourceSearch={() => handleOpenSearch('source')}
+            onOpenDestinationSearch={() => handleOpenSearch('destination')}
+            onSelectSourceOnMap={() => handleStartMapSelection('source')}
+            onSelectDestinationOnMap={() => handleStartMapSelection('destination')}
+            onOpenQrScan={onOpenQrScan}
+            onSwap={swapSourceAndDestination}
+            onClearSource={() => setStartNode(null)}
+            onClearDestination={() => setDestinationNode(null)}
+          />
+
+          {/* Primary Action Button: FIND ROUTE */}
+          <View style={styles.findRouteWrapper}>
+            <TouchableOpacity
+              style={styles.findRouteBtn}
+              onPress={handleFindRoute}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.findRouteBtnText}>
+                {destinationNode ? 'GET ROUTE DIRECTIONS →' : 'FIND ROUTE →'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ACCESSIBILITY & TRAVEL MODES (Uber Ride Class Selector) */}
         <ProfilePicker
           selectedProfileId={selectedProfile}
           onSelectProfile={setProfile}
         />
 
-        {/* 5. ROUTE PREVIEW CARD (When route is ready) */}
+        {/* ROUTE PREVIEW CARD (Uber Ride Confirmation View) */}
         {activeRoute && !isNavigating && (
-          <View>
+          <View style={styles.routePreviewWrapper}>
             <TouchableOpacity
               style={styles.clearRouteBtn}
               onPress={() => {
@@ -367,7 +433,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.clearRouteBtnText}>← Clear Route / Back to Station</Text>
+              <Text style={styles.clearRouteBtnText}>← Clear Route / Back</Text>
             </TouchableOpacity>
             <RoutePreviewCard
               route={activeRoute}
@@ -382,55 +448,65 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         )}
 
-        {/* 6. HERO MAP CONTAINER */}
+        {/* INTERACTIVE CAD MAP (Hero Viewport) */}
         <View style={styles.mapSectionWrapper}>
-          <KsrMap
-            routeCoordinates={activeRoute?.pathGeometry}
-            currentLocation={startNode?.coordinates}
-            destinationLocation={destinationNode?.coordinates}
-            onSelectPlatform={handlePlatformTapped}
-            onSelectFacility={handleFacilityTapped}
-            onSelectMapCoordinate={handleMapCoordinateSelected}
-            selectionMode={mapSelectionMode}
-            onCancelSelection={() => setMapSelectionMode('none')}
-            isFullscreen={false}
-            onToggleFullscreen={() => setIsFullscreenMap(true)}
-          />
+          <View style={styles.mapCard}>
+            <KsrMap
+              routeCoordinates={activeRoute?.pathGeometry}
+              currentLocation={startNode?.coordinates}
+              destinationLocation={destinationNode?.coordinates}
+              onSelectPlatform={handlePlatformTapped}
+              onSelectFacility={handleFacilityTapped}
+              onSelectMapCoordinate={handleMapCoordinateSelected}
+              selectionMode={mapSelectionMode}
+              onCancelSelection={() => setMapSelectionMode('none')}
+              isFullscreen={false}
+              onToggleFullscreen={() => setIsFullscreenMap(true)}
+            />
+          </View>
         </View>
 
-        {/* 7. QUICK FACILITIES */}
+        {/* ESSENTIAL FACILITIES (Swiggy/Blinkit Category Carousel) */}
         <QuickActionBadges onSelectAction={handleQuickAction} />
 
-        {/* 8. AI ASSISTANT & DIRECTORY TILES */}
-        <View style={styles.actionCardsRow}>
+        {/* CURATED PROMOTIONAL BANNERS (Blinkit / Swiggy Feature Cards) */}
+        <View style={styles.featureBannersRow}>
           <TouchableOpacity
-            style={styles.actionCard}
+            style={styles.featureBanner}
             onPress={onOpenAssistant}
             activeOpacity={0.85}
           >
-            <View style={styles.actionCardIconBox}>
-              <Text style={styles.actionCardIcon}>💬</Text>
+            <View style={styles.bannerIconBox}>
+              <Text style={styles.bannerIcon}>🤖</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.actionCardTitle}>Ask RailMarga</Text>
-              <Text style={styles.actionCardSub}>Station AI Assistant</Text>
+              <View style={styles.bannerTagRow}>
+                <Text style={styles.bannerTag}>AI ASSISTANT</Text>
+              </View>
+              <Text style={styles.bannerTitle}>Ask RailMarga</Text>
+              <Text style={styles.bannerSubtitle}>Train status, lifts & gates</Text>
             </View>
-            <Text style={styles.actionCardArrow}>→</Text>
+            <Text style={styles.bannerArrow}>→</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.actionCard}
+            style={styles.featureBanner}
             onPress={onOpenFacilities}
             activeOpacity={0.85}
           >
-            <View style={styles.actionCardIconBox}>
-              <Text style={styles.actionCardIcon}>🏢</Text>
+            <View style={[styles.bannerIconBox, { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE' }]}>
+              <Text style={styles.bannerIcon}>🏢</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.actionCardTitle}>Directory</Text>
-              <Text style={styles.actionCardSub}>Facilities & Lifts</Text>
+              <View style={styles.bannerTagRow}>
+                <Text style={[styles.bannerTag, { color: '#4F46E5', backgroundColor: '#EEF2FF', borderColor: '#C7D2FE' }]}>
+                  42 AMENITIES
+                </Text>
+              </View>
+              <Text style={styles.bannerTitle}>Directory</Text>
+              <Text style={styles.bannerSubtitle}>Restrooms, FOBs & lifts</Text>
             </View>
-            <Text style={styles.actionCardArrow}>→</Text>
+            <Text style={styles.bannerArrow}>→</Text>
           </TouchableOpacity>
         </View>
 
@@ -467,11 +543,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onClose={() => setTappedEntity(null)}
         onSetAsStart={(node) => setStartNode(node, 'PLATFORM')}
         onSetAsDestination={(node) => setDestinationNode(node, 'PLATFORM')}
-        onNavigateHere={(node) => {
+        onNavigateHere={async (node) => {
           setDestinationNode(node, 'PLATFORM');
           if (!startNode) {
-            handleOpenSearch('source');
+            const defaultStart = localRouter.nodeDict.get('node_entry_t1_main_east');
+            if (defaultStart) {
+              setStartNode(defaultStart, 'SEARCH');
+            }
           }
+          await calculateRoute();
         }}
       />
 
@@ -487,36 +567,37 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.bgSecondary
+    backgroundColor: '#F8F9FA'
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
-    backgroundColor: Colors.bgPrimary,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border
+    borderBottomColor: '#F1F5F9'
   },
   brandContainer: {
     justifyContent: 'center'
   },
   brandLogo: {
-    width: 120,
-    height: 38
+    width: 112,
+    height: 34
   },
-  brandSub: {
-    fontSize: 10,
+  locationDropdown: {
+    marginTop: 2
+  },
+  locationText: {
+    fontSize: 11,
     color: Colors.textSecondary,
-    fontWeight: '600',
-    marginTop: -4,
-    marginLeft: 2
+    fontWeight: '600'
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs
+    gap: 8
   },
   statusPill: {
     flexDirection: 'row',
@@ -524,11 +605,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: Radii.pill,
-    borderWidth: 1
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0'
   },
   statusOnline: {
-    backgroundColor: Colors.successLight,
-    borderColor: Colors.success
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0'
   },
   statusOffline: {
     backgroundColor: Colors.warningLight,
@@ -538,134 +621,302 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginRight: 5
+    marginRight: 4
   },
   statusPillText: {
     fontSize: 10,
     fontWeight: '700',
-    color: Colors.textPrimary
+    color: '#065F46'
   },
-  demoPill: {
-    backgroundColor: Colors.bgSecondary,
+  alertsPill: {
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: Radii.pill,
     borderWidth: 1,
-    borderColor: Colors.border
+    borderColor: '#E2E8F0',
+    ...Shadows.sm
   },
-  demoPillText: {
+  alertsPillText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: Colors.textSecondary
+    fontWeight: '700',
+    color: Colors.goldDark
   },
   scrollContent: {
     paddingBottom: 24
   },
   searchSection: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xs
+    paddingHorizontal: Spacing.sm,
+    paddingTop: Spacing.sm,
+    paddingBottom: 4
   },
-  greetingText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs
-  },
-  searchField: {
+  floatingSearchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.bgPrimary,
-    borderRadius: Radii.md,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadows.sm
+    borderColor: '#EAEAEA',
+    ...Shadows.floating
   },
-  searchFieldIcon: {
-    fontSize: 16,
-    marginRight: Spacing.xs
+  searchIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: Colors.goldTintSolid,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#FDE047'
   },
-  searchFieldPlaceholder: {
-    fontSize: 13,
-    color: Colors.textTertiary,
-    fontWeight: '400'
+  searchIconText: {
+    fontSize: 18
   },
-  sectionHeaderRow: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm,
-    paddingBottom: 2
+  searchTextBox: {
+    flex: 1
   },
-  sectionHeaderTitle: {
+  searchMainTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: Colors.textPrimary
+  },
+  searchSubtitle: {
     fontSize: 11,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+    marginTop: 2
+  },
+  qrShortcutBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radii.sm,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E2E8F0'
+  },
+  qrShortcutIcon: {
+    fontSize: 14
+  },
+  qrShortcutText: {
+    fontSize: 9,
     fontWeight: '700',
     color: Colors.textSecondary,
+    marginTop: 1
+  },
+  platformStripSection: {
+    marginVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm
+  },
+  platformStripHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+    paddingHorizontal: 4
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: Colors.textSecondary,
     letterSpacing: 0.8
+  },
+  sectionSubtitle: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: Colors.textTertiary
+  },
+  platformStripScroll: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingRight: Spacing.sm,
+    paddingVertical: 2
+  },
+  platformChip: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    minWidth: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.sm
+  },
+  platformChipActive: {
+    backgroundColor: Colors.goldTintSolid,
+    borderColor: Colors.goldPrimary,
+    borderWidth: 2
+  },
+  platformChipNumber: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.textPrimary
+  },
+  platformChipNumberActive: {
+    color: Colors.goldDark
+  },
+  journeySection: {
+    marginVertical: 2
   },
   findRouteWrapper: {
     paddingHorizontal: Spacing.sm,
-    marginVertical: Spacing.xs
+    marginTop: 4,
+    marginBottom: Spacing.xs
   },
   findRouteBtn: {
     backgroundColor: Colors.goldPrimary,
-    borderRadius: Radii.button,
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: 14,
+    borderRadius: Radii.md,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.floating
+    ...Shadows.card
   },
   findRouteBtnText: {
-    color: Colors.charcoalPrimary,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '800',
-    letterSpacing: 0.8
+    letterSpacing: 0.5
+  },
+  routePreviewWrapper: {
+    marginVertical: 4
+  },
+  clearRouteBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.md,
+    alignSelf: 'flex-start'
+  },
+  clearRouteBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.goldDark
   },
   mapSectionWrapper: {
+    paddingHorizontal: Spacing.sm,
     marginVertical: Spacing.xs
   },
-  actionCardsRow: {
-    flexDirection: 'row',
-    gap: Spacing.xs + 2,
-    paddingHorizontal: Spacing.sm,
-    marginTop: Spacing.sm
+  mapCard: {
+    borderRadius: Radii.lg,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    ...Shadows.card
   },
-  actionCard: {
+  featureBannersRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: Spacing.sm,
+    marginVertical: Spacing.xs
+  },
+  featureBanner: {
     flex: 1,
-    backgroundColor: Colors.bgPrimary,
-    borderRadius: Radii.md,
-    padding: Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.md,
+    padding: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: '#EAEAEA',
     ...Shadows.sm
   },
-  actionCardIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: Radii.sm,
-    backgroundColor: Colors.bgSecondary,
+  bannerIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: Colors.goldTintSolid,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#FDE047'
   },
-  actionCardIcon: {
-    fontSize: 16
+  bannerIcon: {
+    fontSize: 18
   },
-  actionCardTitle: {
-    color: Colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '600'
+  bannerTagRow: {
+    marginBottom: 2
   },
-  actionCardSub: {
+  bannerTag: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: Colors.goldDark,
+    backgroundColor: Colors.goldTintSolid,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#FDE047'
+  },
+  bannerTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.textPrimary
+  },
+  bannerSubtitle: {
+    fontSize: 9,
     color: Colors.textSecondary,
-    fontSize: 10,
-    marginTop: 1
+    fontWeight: '500'
   },
-  actionCardArrow: {
+  bannerArrow: {
+    fontSize: 14,
+    fontWeight: '700',
     color: Colors.textTertiary,
-    fontSize: 14
+    marginLeft: 4
+  },
+  navHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    backgroundColor: '#1E293B',
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155'
+  },
+  navHeaderBackBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radii.sm,
+    backgroundColor: '#334155'
+  },
+  navHeaderBackText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700'
+  },
+  navHeaderInfo: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8
+  },
+  navHeaderDest: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800'
+  },
+  navHeaderStats: {
+    color: '#10B981',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2
+  },
+  navHeaderExitBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radii.sm,
+    backgroundColor: '#DC2626'
+  },
+  navHeaderExitText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800'
   },
   bannerContainer: {
     position: 'absolute',
@@ -679,101 +930,49 @@ const styles = StyleSheet.create({
   },
   fullscreenHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
+    paddingVertical: Spacing.xs,
     backgroundColor: Colors.bgPrimary,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border
   },
   backBtn: {
-    padding: 4
-  },
-  backBtnText: {
-    color: Colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '600'
-  },
-  fullscreenTitle: {
-    color: Colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '700'
-  },
-  floatingRouteCard: {
-    position: 'absolute',
-    bottom: Spacing.md,
-    left: 0,
-    right: 0
-  },
-  navHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 2,
-    backgroundColor: Colors.bgPrimary,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border
-  },
-  navHeaderBackBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     backgroundColor: Colors.bgSecondary,
     borderRadius: Radii.sm,
     borderWidth: 1,
     borderColor: Colors.border
   },
-  navHeaderBackText: {
+  backBtnText: {
     color: Colors.textPrimary,
     fontSize: 12,
     fontWeight: '700'
   },
-  navHeaderInfo: {
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: Spacing.xs
-  },
-  navHeaderDest: {
+  fullscreenTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.textPrimary
   },
-  navHeaderStats: {
+  demoPill: {
+    backgroundColor: Colors.bgSecondary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  demoPillText: {
     fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 1
+    fontWeight: '700',
+    color: Colors.textSecondary
   },
-  navHeaderExitBtn: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    backgroundColor: Colors.bgPrimary
-  },
-  navHeaderExitText: {
-    color: Colors.error,
-    fontSize: 12,
-    fontWeight: '700'
-  },
-  clearRouteBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.bgPrimary,
-    paddingVertical: 6,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radii.sm,
-    marginHorizontal: Spacing.sm,
-    marginBottom: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadows.sm
-  },
-  clearRouteBtnText: {
-    color: Colors.textPrimary,
-    fontSize: 12,
-    fontWeight: '600'
+  floatingRouteCard: {
+    position: 'absolute',
+    bottom: 20,
+    left: 10,
+    right: 10
   }
 });

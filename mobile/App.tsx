@@ -6,6 +6,7 @@ import { AssistantChatScreen } from './src/screens/AssistantChatScreen';
 import { FacilityFinderScreen } from './src/screens/FacilityFinderScreen';
 import { PlatformDetailScreen } from './src/screens/PlatformDetailScreen';
 import { QrScanScreen } from './src/screens/QrScanScreen';
+import { BottomNavBar, TabKey } from './src/components/BottomNavBar';
 import { useNavigationStore } from './src/store/navigationStore';
 import { RouteResult } from './src/services/localRouter';
 
@@ -15,12 +16,27 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('home');
   const [selectedPlatform, setSelectedPlatform] = useState<any>(null);
 
-  const { startNavigation, setDestinationNode } = useNavigationStore();
+  const { startNavigation, setDestinationNode, isNavigating } = useNavigationStore();
 
   const handleStartRouteFromAssistant = (route: RouteResult) => {
     setDestinationNode(route.destination);
     startNavigation(route);
     setCurrentScreen('home');
+  };
+
+  const activeTab: TabKey =
+    currentScreen === 'home'
+      ? 'home'
+      : currentScreen === 'facilities'
+      ? 'facilities'
+      : currentScreen === 'assistant'
+      ? 'assistant'
+      : currentScreen === 'qrScan'
+      ? 'qrScan'
+      : 'home';
+
+  const handleSelectTab = (tab: TabKey) => {
+    setCurrentScreen(tab);
   };
 
   const renderScreen = () => {
@@ -71,10 +87,20 @@ export default function App() {
     }
   };
 
+  const showBottomBar = !isNavigating && currentScreen !== 'platformDetail';
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" backgroundColor="#FFFFFF" />
-      {renderScreen()}
+      <View style={styles.screenContent}>
+        {renderScreen()}
+      </View>
+      {showBottomBar && (
+        <BottomNavBar
+          activeTab={activeTab}
+          onSelectTab={handleSelectTab}
+        />
+      )}
     </View>
   );
 }
@@ -83,5 +109,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF'
+  },
+  screenContent: {
+    flex: 1
   }
 });

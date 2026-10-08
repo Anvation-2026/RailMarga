@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { RouteResult, RouteStep } from '../services/localRouter';
-import { Colors, Shadows, Radii, Spacing, Typography } from '../theme/tokens';
+import { Colors, Shadows, Radii, Spacing } from '../theme/tokens';
 
 interface NavigationBannerProps {
   route: RouteResult;
@@ -29,6 +29,17 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
   const isLast = steps.length > 0 ? currentStepIndex >= steps.length - 1 : true;
   const isFirst = currentStepIndex === 0;
 
+  const getStepIcon = (instruction: string, pathType: string) => {
+    const text = (instruction + ' ' + pathType).toLowerCase();
+    if (text.includes('lift') || text.includes('elevator')) return '🛗';
+    if (text.includes('ramp')) return '↗️';
+    if (text.includes('stair') || text.includes('steps')) return '🪜';
+    if (text.includes('left')) return '↖️';
+    if (text.includes('right')) return '↗️';
+    if (text.includes('arrive') || text.includes('platform')) return '🏁';
+    return '⬆️';
+  };
+
   return (
     <View style={styles.container}>
       {/* Blockage Alert Banner if active */}
@@ -36,57 +47,45 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
         <View style={styles.blockageAlertBox}>
           <Text style={styles.blockageAlertIcon}>🚧</Text>
           <View style={{ flex: 1 }}>
-            <Text style={styles.blockageAlertTitle}>Route Updated</Text>
+            <Text style={styles.blockageAlertTitle}>Live Route Re-routing</Text>
             <Text style={styles.blockageAlertText}>{blockageAlert}</Text>
           </View>
         </View>
       )}
 
-      {/* Header Metric Row */}
-      <View style={styles.metricRow}>
-        <View style={styles.destinationBadge}>
-          <Text style={styles.destinationLabel}>DESTINATION</Text>
-          <Text style={styles.destinationName} numberOfLines={1}>
-            {route.destination.name}
-          </Text>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{route.totalDistanceMeters}m</Text>
-            <Text style={styles.statLabel}>Distance</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{route.estimatedTimeMinutes} min</Text>
-            <Text style={styles.statLabel}>ETA</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.voiceBtn, voiceEnabled && styles.voiceBtnActive]}
-          onPress={onToggleVoice}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.voiceBtnText}>{voiceEnabled ? '🔊' : '🔇'}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Main Step Instruction Card */}
+      {/* Main Turn-by-Turn Maneuver Card (Google Maps / Uber HUD) */}
       {currentStep && (
-        <View style={styles.stepCard}>
-          <View style={styles.stepHeader}>
-            <View style={styles.stepBadge}>
-              <Text style={styles.stepBadgeText}>
-                NEXT • STEP {currentStepIndex + 1} OF {route.steps.length}
+        <View style={styles.hudCard}>
+          <View style={styles.hudTopRow}>
+            <View style={styles.maneuverIconBox}>
+              <Text style={styles.maneuverIcon}>{getStepIcon(currentStep.instruction, currentStep.pathType)}</Text>
+            </View>
+            <View style={styles.hudInstructionCol}>
+              <View style={styles.distanceBadgeRow}>
+                <Text style={styles.distanceText}>
+                  {currentStep.distance > 0 ? `In ${currentStep.distance}m` : 'At location'}
+                </Text>
+                <View style={styles.stepProgressPill}>
+                  <Text style={styles.stepProgressText}>
+                    Step {currentStepIndex + 1} of {steps.length}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.instructionText} numberOfLines={2}>
+                {currentStep.instruction}
               </Text>
             </View>
-            <Text style={styles.stepTypeBadge}>
-              {currentStep.distance > 0 ? `${currentStep.distance}m` : currentStep.pathType}
-            </Text>
           </View>
 
-          <Text style={styles.instructionText}>{currentStep.instruction}</Text>
+          {/* Progress bar */}
+          <View style={styles.progressBarTrack}>
+            <View
+              style={[
+                styles.progressBarFill,
+                { width: `${Math.round(((currentStepIndex + 1) / Math.max(steps.length, 1)) * 100)}%` }
+              ]}
+            />
+          </View>
 
           {currentStep.landmark ? (
             <View style={styles.landmarkRow}>
@@ -96,43 +95,52 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
               </Text>
             </View>
           ) : null}
-
-          {/* Accessibility pill indicators */}
-          <View style={styles.accessibleRow}>
-            <Text style={styles.accessiblePillText}>✓ Step-Free Corridor</Text>
-            <Text style={styles.accessiblePillText}>• Accessible</Text>
-          </View>
         </View>
       )}
 
-      {/* Control Actions Row */}
-      <View style={styles.actionRow}>
-        <TouchableOpacity
-          style={[styles.navBtn, isFirst && styles.navBtnDisabled]}
-          onPress={onPreviousStep}
-          disabled={isFirst}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.navBtnText}>← Previous</Text>
-        </TouchableOpacity>
+      {/* Bottom Floating Stats & Control Bar */}
+      <View style={styles.bottomBar}>
+        <View style={styles.tripStats}>
+          <Text style={styles.etaText}>{route.estimatedTimeMinutes} min</Text>
+          <Text style={styles.remainingText}>{route.totalDistanceMeters}m remaining</Text>
+        </View>
 
-        <TouchableOpacity
-          style={styles.stopBtn}
-          onPress={onStopNavigation}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.stopBtnText}>Exit</Text>
-        </TouchableOpacity>
+        <View style={styles.actionsGroup}>
+          <TouchableOpacity
+            style={[styles.actionBtn, voiceEnabled && styles.actionBtnActive]}
+            onPress={onToggleVoice}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.actionBtnIcon}>{voiceEnabled ? '🔊' : '🔇'}</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.navBtn, styles.nextBtn]}
-          onPress={onAdvanceStep}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.nextBtnText}>
-            {isLast ? 'Arrived ✓' : 'Next Step →'}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.stepBtn, isFirst && styles.stepBtnDisabled]}
+            onPress={onPreviousStep}
+            disabled={isFirst}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.stepBtnText}>◀</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.stepBtn, styles.nextStepBtn]}
+            onPress={onAdvanceStep}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.nextStepBtnText}>
+              {isLast ? 'Arrived ✓' : 'Next ▶'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.exitBtn}
+            onPress={onStopNavigation}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.exitBtnText}>✕</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -140,214 +148,200 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.bgPrimary,
-    borderTopLeftRadius: Radii.hero,
-    borderTopRightRadius: Radii.hero,
-    padding: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    ...Shadows.floating
+    paddingHorizontal: Spacing.sm,
+    paddingBottom: Spacing.xs
   },
   blockageAlertBox: {
-    backgroundColor: Colors.errorLight,
-    borderRadius: Radii.md,
-    padding: Spacing.sm,
-    marginBottom: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.error,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs
+    backgroundColor: '#FEF3C7',
+    borderRadius: Radii.md,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#F59E0B'
   },
   blockageAlertIcon: {
-    fontSize: 20
+    fontSize: 18,
+    marginRight: 8
   },
   blockageAlertTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: Colors.error
+    color: '#92400E'
   },
   blockageAlertText: {
-    color: Colors.textPrimary,
-    fontSize: 12,
-    marginTop: 1
+    fontSize: 11,
+    color: '#78350F'
   },
-  metricRow: {
+  hudCard: {
+    backgroundColor: '#1E293B',
+    borderRadius: Radii.lg,
+    padding: 14,
+    ...Shadows.floating
+  },
+  hudTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm
-  },
-  destinationBadge: {
-    flex: 1,
-    marginRight: Spacing.sm
-  },
-  destinationLabel: {
-    color: Colors.textSecondary,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8
-  },
-  destinationName: {
-    color: Colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700'
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    backgroundColor: Colors.bgSecondary,
-    borderRadius: Radii.md,
-    paddingVertical: 5,
-    paddingHorizontal: Spacing.sm,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border
-  },
-  statItem: {
     alignItems: 'center'
   },
-  statValue: {
-    color: Colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '700'
-  },
-  statLabel: {
-    color: Colors.textSecondary,
-    fontSize: 9
-  },
-  statDivider: {
-    width: 1,
-    height: 18,
-    backgroundColor: Colors.border,
-    marginHorizontal: Spacing.xs
-  },
-  voiceBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: Radii.pill,
-    backgroundColor: Colors.bgSecondary,
-    justifyContent: 'center',
+  maneuverIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#0F172A',
     alignItems: 'center',
-    marginLeft: Spacing.xs,
+    justifyContent: 'center',
+    marginRight: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadows.sm
+    borderColor: '#334155'
   },
-  voiceBtnActive: {
-    backgroundColor: Colors.goldTintSolid,
-    borderColor: Colors.goldPrimary
+  maneuverIcon: {
+    fontSize: 24
   },
-  voiceBtnText: {
-    fontSize: 16
+  hudInstructionCol: {
+    flex: 1
   },
-  stepCard: {
-    backgroundColor: Colors.bgSecondary,
-    borderRadius: Radii.md,
-    padding: Spacing.sm + 2,
-    marginBottom: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.border
-  },
-  stepHeader: {
+  distanceBadgeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6
+    marginBottom: 2
   },
-  stepBadge: {
-    backgroundColor: Colors.goldTintSolid,
-    borderRadius: Radii.sm,
-    paddingVertical: 2,
+  distanceText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#10B981',
+    letterSpacing: 0.3
+  },
+  stepProgressPill: {
+    backgroundColor: '#334155',
     paddingHorizontal: 6,
-    borderWidth: 1,
-    borderColor: Colors.goldLight
+    paddingVertical: 2,
+    borderRadius: 6
   },
-  stepBadgeText: {
-    color: Colors.goldDark,
+  stepProgressText: {
     fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 0.6
-  },
-  stepTypeBadge: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '600'
+    color: '#94A3B8'
   },
   instructionText: {
-    color: Colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 22,
-    marginBottom: 6
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    lineHeight: 18
+  },
+  progressBarTrack: {
+    height: 3,
+    backgroundColor: '#334155',
+    borderRadius: 2,
+    marginTop: 10,
+    marginBottom: 6,
+    overflow: 'hidden'
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#10B981'
   },
   landmarkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 4
+    marginTop: 4
   },
   landmarkIcon: {
-    fontSize: 12
+    fontSize: 11,
+    marginRight: 4
   },
   landmarkText: {
-    color: Colors.textSecondary,
-    fontSize: 12
-  },
-  accessibleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2
-  },
-  accessiblePillText: {
-    color: Colors.success,
     fontSize: 11,
-    fontWeight: '600'
+    color: '#94A3B8',
+    fontWeight: '500'
   },
-  actionRow: {
+  bottomBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.xs
+    backgroundColor: Colors.bgPrimary,
+    borderRadius: Radii.lg,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...Shadows.card
   },
-  navBtn: {
-    flex: 1,
-    backgroundColor: Colors.bgSecondary,
-    borderRadius: Radii.button,
-    paddingVertical: Spacing.sm,
+  tripStats: {
+    justifyContent: 'center'
+  },
+  etaText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: Colors.textPrimary
+  },
+  remainingText: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    fontWeight: '500'
+  },
+  actionsGroup: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6
+  },
+  actionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.bgSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: Colors.border
   },
-  navBtnDisabled: {
+  actionBtnActive: {
+    backgroundColor: Colors.goldTintSolid,
+    borderColor: Colors.goldPrimary
+  },
+  actionBtnIcon: {
+    fontSize: 16
+  },
+  stepBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radii.sm,
+    backgroundColor: Colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  stepBtnDisabled: {
     opacity: 0.4
   },
-  navBtnText: {
-    color: Colors.textPrimary,
+  stepBtnText: {
     fontSize: 13,
-    fontWeight: '600'
-  },
-  nextBtn: {
-    backgroundColor: Colors.goldPrimary,
-    borderColor: Colors.goldDark,
-    ...Shadows.sm
-  },
-  nextBtnText: {
-    color: Colors.charcoalPrimary,
     fontWeight: '700',
-    fontSize: 13
+    color: Colors.textPrimary
   },
-  stopBtn: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radii.button,
-    backgroundColor: Colors.bgPrimary,
-    borderWidth: 1,
-    borderColor: Colors.borderLight
+  nextStepBtn: {
+    backgroundColor: Colors.goldPrimary,
+    borderColor: Colors.goldPrimary
   },
-  stopBtnText: {
-    color: Colors.error,
+  nextStepBtnText: {
     fontSize: 13,
-    fontWeight: '600'
+    fontWeight: '800',
+    color: '#FFFFFF'
+  },
+  exitBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FCA5A5'
+  },
+  exitBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#DC2626'
   }
 });

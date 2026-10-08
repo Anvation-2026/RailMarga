@@ -76,6 +76,11 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
     <Modal visible={visible} animationType="slide" transparent={true}>
       <View style={styles.modalBackdrop}>
         <View style={styles.modalCard}>
+          {/* Bottom Sheet Handle */}
+          <View style={styles.handleRow}>
+            <View style={styles.handle} />
+          </View>
+
           {/* Header */}
           <View style={styles.header}>
             <View>
@@ -206,10 +211,21 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: Radii.hero,
     borderTopRightRadius: Radii.hero,
     padding: Spacing.lg,
+    paddingTop: 10,
     maxHeight: '85%',
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     ...Shadows.floating
+  },
+  handleRow: {
+    alignItems: 'center',
+    paddingBottom: 10
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1'
   },
   header: {
     flexDirection: 'row',

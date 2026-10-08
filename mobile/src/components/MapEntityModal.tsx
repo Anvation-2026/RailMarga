@@ -45,6 +45,11 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
     <Modal visible={!!entity} animationType="fade" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheetContainer}>
+          {/* Bottom Sheet Handle */}
+          <View style={styles.handleRow}>
+            <View style={styles.handle} />
+          </View>
+
           {/* Header */}
           <View style={styles.headerRow}>
             <View style={styles.titleGroup}>
@@ -145,9 +150,20 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: Radii.hero,
     borderTopRightRadius: Radii.hero,
     padding: Spacing.lg,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     ...Shadows.floating
+  },
+  handleRow: {
+    alignItems: 'center',
+    paddingBottom: 10
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1'
   },
   headerRow: {
     flexDirection: 'row',
