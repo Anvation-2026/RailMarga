@@ -1,0 +1,25 @@
+{
+  "name": "railmarga",
+  "version": "1.0.0",
+  "description": "RailMarga - Smart, Accessible & AI-Powered Indoor Navigation for KSR Bengaluru Railway Station",
+  "scripts": {
+    "validate-data": "python scripts/validate_graph.py",
+    "test": "node --test server/dist/test_endpoints.js",
+    "build:data": "python scripts/build_station_models.py && python scripts/generate_graph.py && python scripts/bundle_mobile_data.py",
+    "start:server": "cd server && npm start",
+    "dev:server": "cd server && npm run dev",
+    "start:mobile": "cd mobile && npx expo start"
+  },
+  "keywords": [
+    "railmarga",
+    "ksr-bengaluru",
+    "indoor-navigation",
+    "accessibility",
+    "wheelchair",
+    "expo",
+    "react-native",
+    "gemini"
+  ],
+  "author": "RailMarga Architecture Team",
+  "license": "MIT"
+}
