@@ -3,11 +3,12 @@ import platformsData from '../data/station/platforms.json';
 import facilitiesData from '../data/station/facilities.json';
 import checkpointsData from '../data/simulation/checkpoints.json';
 
-// Supports both USB ADB Reverse (localhost) and Local Wi-Fi IP
-const LOCAL_WIFI_IP = '10.24.42.26';
+// Supports USB ADB Reverse (localhost) and Local Wi-Fi IP
+const LOCAL_WIFI_IP = '10.0.5.101';
 const CANDIDATE_URLS = [
   'http://localhost:3000',
   `http://${LOCAL_WIFI_IP}:3000`,
+  'http://10.24.42.26:3000',
   'http://10.0.2.2:3000'
 ];
 
