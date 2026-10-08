@@ -134,7 +134,7 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
       {/* Start Navigation CTA */}
       <TouchableOpacity
         style={styles.startNavBtn}
-        onPress={onStartNavigation}
+        onPress={() => onStartNavigation()}
         activeOpacity={0.85}
       >
         <Text style={styles.startNavText}>START NAVIGATION</Text>

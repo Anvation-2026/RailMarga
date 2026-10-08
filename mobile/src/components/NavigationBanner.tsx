@@ -24,8 +24,9 @@ export const NavigationBanner: React.FC<NavigationBannerProps> = ({
   onToggleVoice,
   onStopNavigation
 }) => {
-  const currentStep: RouteStep | undefined = route.steps[currentStepIndex];
-  const isLast = currentStepIndex >= route.steps.length - 1;
+  const steps = route?.steps || [];
+  const currentStep: RouteStep | undefined = steps[currentStepIndex];
+  const isLast = steps.length > 0 ? currentStepIndex >= steps.length - 1 : true;
   const isFirst = currentStepIndex === 0;
 
   return (

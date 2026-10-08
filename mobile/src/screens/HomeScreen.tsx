@@ -332,7 +332,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <RoutePreviewCard
             route={activeRoute}
             selectedProfileId={selectedProfile}
-            onStartNavigation={startNavigation}
+            onStartNavigation={() => startNavigation()}
             onFitRoute={() => {}}
           />
         )}

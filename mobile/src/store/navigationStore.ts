@@ -108,12 +108,14 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     return route;
   },
 
-  startNavigation: (customRoute) => {
-    const route = customRoute || get().activeRoute;
-    if (!route) return;
+  startNavigation: (customRoute?: any) => {
+    const route = (customRoute && typeof customRoute === 'object' && Array.isArray(customRoute.steps))
+      ? customRoute
+      : get().activeRoute;
+    if (!route || !Array.isArray(route.steps)) return;
     set({ activeRoute: route, isNavigating: true, currentStepIndex: 0 });
 
-    if (route.steps.length > 0 && get().voiceEnabled) {
+    if (route.steps.length > 0 && get().voiceEnabled && route.steps[0]?.voiceText) {
       voiceService.speak(route.steps[0].voiceText);
     }
   },
