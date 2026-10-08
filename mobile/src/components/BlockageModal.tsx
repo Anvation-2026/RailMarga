@@ -82,9 +82,14 @@ export const BlockageModal: React.FC<BlockageModalProps> = ({ visible, onClose }
               <Text style={styles.badge}>STATION CONDITIONS & SCENARIOS</Text>
               <Text style={styles.title}>Incident Simulation</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeBtnText}>✕</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <TouchableOpacity onPress={onClose} style={styles.backBtn} activeOpacity={0.8}>
+                <Text style={styles.backBtnText}>← Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
@@ -223,6 +228,19 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     marginTop: 2
+  },
+  backBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  backBtnText: {
+    color: Colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '600'
   },
   closeBtn: {
     padding: 6

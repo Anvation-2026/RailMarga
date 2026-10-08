@@ -123,13 +123,15 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-            <Text style={styles.closeBtnText}>✕</Text>
+          <TouchableOpacity onPress={onClose} style={styles.backBtn} activeOpacity={0.8}>
+            <Text style={styles.backBtnText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>
-            {mode === 'source' ? 'SELECT STARTING LOCATION' : 'SELECT DESTINATION'}
+            {mode === 'source' ? 'SELECT START' : 'SELECT DESTINATION'}
           </Text>
-          <View style={{ width: 32 }} />
+          <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
+            <Text style={styles.closeBtnText}>✕</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Search Input */}
@@ -222,6 +224,19 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border
+  },
+  backBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  backBtnText: {
+    color: Colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '600'
   },
   closeBtn: {
     padding: Spacing.xs

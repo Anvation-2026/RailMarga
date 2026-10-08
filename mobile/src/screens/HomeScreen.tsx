@@ -244,33 +244,60 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.bgPrimary} />
 
-      {/* 1. TOP HEADER */}
-      <View style={styles.header}>
-        <View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={styles.brandTitle}>RAIL</Text>
-            <Text style={[styles.brandTitle, { color: Colors.goldPrimary }]}>MARGA</Text>
-          </View>
-          <Text style={styles.brandSub}>KSR Bengaluru</Text>
-        </View>
-
-        <View style={styles.headerRight}>
-          {/* Online/Offline indicator pill */}
-          <View style={[styles.statusPill, isOnline ? styles.statusOnline : styles.statusOffline]}>
-            <View style={[styles.statusDot, { backgroundColor: isOnline ? Colors.success : Colors.warning }]} />
-            <Text style={styles.statusPillText}>{isOnline ? 'Online' : 'Offline'}</Text>
-          </View>
-
-          {/* Sandbox Demo Launcher */}
+      {/* 1. TOP HEADER (Switches to Navigation Header with Back button during navigation) */}
+      {isNavigating && activeRoute ? (
+        <View style={styles.navHeader}>
           <TouchableOpacity
-            style={styles.demoPill}
-            onPress={() => setDemoModalVisible(true)}
+            style={styles.navHeaderBackBtn}
+            onPress={stopNavigation}
             activeOpacity={0.8}
           >
-            <Text style={styles.demoPillText}>⚡ Conditions</Text>
+            <Text style={styles.navHeaderBackText}>← Back</Text>
+          </TouchableOpacity>
+          <View style={styles.navHeaderInfo}>
+            <Text style={styles.navHeaderDest} numberOfLines={1}>
+              {activeRoute.destination.name}
+            </Text>
+            <Text style={styles.navHeaderStats}>
+              {activeRoute.estimatedTimeMinutes} min • {activeRoute.totalDistanceMeters}m
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.navHeaderExitBtn}
+            onPress={stopNavigation}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.navHeaderExitText}>Exit</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      ) : (
+        <View style={styles.header}>
+          <View>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.brandTitle}>RAIL</Text>
+              <Text style={[styles.brandTitle, { color: Colors.goldPrimary }]}>MARGA</Text>
+            </View>
+            <Text style={styles.brandSub}>KSR Bengaluru</Text>
+          </View>
+
+          <View style={styles.headerRight}>
+            {/* Online/Offline indicator pill */}
+            <View style={[styles.statusPill, isOnline ? styles.statusOnline : styles.statusOffline]}>
+              <View style={[styles.statusDot, { backgroundColor: isOnline ? Colors.success : Colors.warning }]} />
+              <Text style={styles.statusPillText}>{isOnline ? 'Online' : 'Offline'}</Text>
+            </View>
+
+            {/* Sandbox Demo Launcher */}
+            <TouchableOpacity
+              style={styles.demoPill}
+              onPress={() => setDemoModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.demoPillText}>⚡ Conditions</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       <ScrollView
         ref={scrollRef}
@@ -329,12 +356,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* 5. ROUTE PREVIEW CARD (When route is ready) */}
         {activeRoute && !isNavigating && (
-          <RoutePreviewCard
-            route={activeRoute}
-            selectedProfileId={selectedProfile}
-            onStartNavigation={() => startNavigation()}
-            onFitRoute={() => {}}
-          />
+          <View>
+            <TouchableOpacity
+              style={styles.clearRouteBtn}
+              onPress={() => {
+                setStartNode(null);
+                setDestinationNode(null);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.clearRouteBtnText}>← Clear Route / Back to Station</Text>
+            </TouchableOpacity>
+            <RoutePreviewCard
+              route={activeRoute}
+              selectedProfileId={selectedProfile}
+              onStartNavigation={() => startNavigation()}
+              onFitRoute={() => {}}
+              onClosePreview={() => {
+                setStartNode(null);
+                setDestinationNode(null);
+              }}
+            />
+          </View>
         )}
 
         {/* 6. HERO MAP CONTAINER */}
@@ -657,5 +700,75 @@ const styles = StyleSheet.create({
     bottom: Spacing.md,
     left: 0,
     right: 0
+  },
+  navHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+    backgroundColor: Colors.bgPrimary,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border
+  },
+  navHeaderBackBtn: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  navHeaderBackText: {
+    color: Colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '700'
+  },
+  navHeaderInfo: {
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: Spacing.xs
+  },
+  navHeaderDest: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.textPrimary
+  },
+  navHeaderStats: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 1
+  },
+  navHeaderExitBtn: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    backgroundColor: Colors.bgPrimary
+  },
+  navHeaderExitText: {
+    color: Colors.error,
+    fontSize: 12,
+    fontWeight: '700'
+  },
+  clearRouteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.bgPrimary,
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: Radii.sm,
+    marginHorizontal: Spacing.sm,
+    marginBottom: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadows.sm
+  },
+  clearRouteBtnText: {
+    color: Colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '600'
   }
 });

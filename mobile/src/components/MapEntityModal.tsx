@@ -53,9 +53,14 @@ export const MapEntityModal: React.FC<MapEntityModalProps> = ({
               </Text>
               <Text style={styles.entityName}>{entity.name}</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeText}>✕</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <TouchableOpacity onPress={onClose} style={styles.backBtn} activeOpacity={0.8}>
+                <Text style={styles.backBtnText}>← Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
+                <Text style={styles.closeText}>✕</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Status & Accessibility Tags */}
@@ -164,6 +169,19 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: Colors.textPrimary
+  },
+  backBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: Colors.bgSecondary,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  backBtnText: {
+    color: Colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '600'
   },
   closeBtn: {
     padding: 6
