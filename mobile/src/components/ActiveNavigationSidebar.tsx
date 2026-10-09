@@ -116,12 +116,28 @@ export const ActiveNavigationSidebar: React.FC<ActiveNavigationSidebarProps> = (
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.destinationTitle} numberOfLines={1}>
-          {route.destination?.name || 'Destination'}
-        </Text>
-        <Text style={styles.originSub} numberOfLines={1}>
-          From {route.start?.name || 'Station entrance'}
-        </Text>
+        {/* Prominent Source & Destination Journey Block */}
+        <View style={styles.journeyRouteBlock}>
+          <View style={styles.journeyPointRow}>
+            <View style={styles.sourceDot} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pointLabel}>FROM (START / SOURCE)</Text>
+              <Text style={styles.pointName} numberOfLines={1}>
+                {route.start?.name || 'Terminal 1 Main Entrance (East)'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.journeyPointRow}>
+            <View style={styles.destinationDot} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pointLabel}>TO (DESTINATION)</Text>
+              <Text style={styles.destTitle} numberOfLines={1}>
+                {route.destination?.name || 'Destination'}
+              </Text>
+            </View>
+          </View>
+        </View>
 
         {/* ETA & Distance Big Stat Row */}
         <View style={styles.statsBar}>
@@ -484,15 +500,51 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#DC2626'
   },
-  destinationTitle: {
-    fontSize: 18,
+  journeyRouteBlock: {
+    backgroundColor: '#FAFAF7',
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.xs + 2,
+    gap: 8,
+    marginTop: 4
+  },
+  journeyPointRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  sourceDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+    borderWidth: 1.5,
+    borderColor: '#D1FAE5'
+  },
+  destinationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#F5B800',
+    borderWidth: 1.5,
+    borderColor: '#FEF3C7'
+  },
+  pointLabel: {
+    fontSize: 9,
     fontWeight: '800',
+    color: '#73736C',
+    letterSpacing: 0.5
+  },
+  pointName: {
+    fontSize: 12,
+    fontWeight: '600',
     color: Colors.textPrimary
   },
-  originSub: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 2
+  destTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: Colors.textPrimary
   },
   statsBar: {
     flexDirection: 'row',

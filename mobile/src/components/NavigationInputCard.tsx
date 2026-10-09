@@ -2,14 +2,13 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { StationNode } from '../services/localRouter';
 import { SourceMethod, DestinationMethod } from '../store/navigationStore';
-import { Colors, Radii, Spacing } from '../theme/tokens';
+import { Colors, Radii, Spacing, Shadows } from '../theme/tokens';
 import {
   SearchIcon,
   QrIcon,
   SwapIcon,
   CloseIcon,
-  MapPinIcon,
-  CheckIcon
+  MapPinIcon
 } from './Icons';
 
 interface NavigationInputCardProps {
@@ -41,155 +40,140 @@ export const NavigationInputCard: React.FC<NavigationInputCardProps> = ({
   onClearSource,
   onClearDestination
 }) => {
-  // 1. Initial State: Single Large Search Bar (Quick-Commerce "Where to?" first)
-  if (!destinationNode) {
-    return (
-      <View style={styles.searchBarContainer}>
-        <TouchableOpacity
-          style={styles.bigSearchBar}
-          onPress={onOpenDestinationSearch}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Search destination at KSR Bengaluru"
-        >
-          <SearchIcon size={20} color="#1A1A1A" strokeWidth={2} />
-          <Text style={styles.searchPlaceholder} numberOfLines={1}>
-            Where to? Platform 8, Lift 2, Waiting Room…
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.qrScanBtn}
-          onPress={onOpenQrScan}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel="Scan QR Checkpoint"
-        >
-          <QrIcon size={20} color="#1A1A1A" strokeWidth={1.75} />
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  // 2. Destination Picked: Show Destination + Starting Gate (Auto-filled)
   return (
-    <View style={styles.expandedCard}>
-      {/* Destination Selected Banner */}
-      <View style={styles.fieldRow}>
-        <View style={styles.dotIndicatorDestination} />
-        <View style={styles.fieldContent}>
-          <Text style={styles.fieldLabel}>Destination</Text>
-          <TouchableOpacity
-            onPress={onOpenDestinationSearch}
-            activeOpacity={0.8}
-            style={styles.locationTitleTouchable}
-          >
-            <Text style={styles.destinationTitle} numberOfLines={1}>
-              {destinationNode.name}
-            </Text>
-            <Text style={styles.locationSub}>
-              {destinationNode.level === -1
-                ? 'Subway · Level -1'
-                : destinationNode.level === 1
-                ? 'FOB · Level 1'
-                : 'Concourse · Level 0'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {onClearDestination && (
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={onClearDestination}
-            activeOpacity={0.7}
-            accessibilityLabel="Clear destination"
-          >
-            <CloseIcon size={16} color="#666660" />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <View style={styles.dividerRow}>
-        <View style={styles.dividerLine} />
-        <TouchableOpacity
-          style={styles.swapBtn}
-          onPress={onSwap}
-          activeOpacity={0.8}
-          accessibilityLabel="Swap start and destination"
-        >
-          <SwapIcon size={16} color="#1A1A1A" strokeWidth={2} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Starting Location (From) */}
+    <View style={styles.cardContainer}>
+      {/* 1. SOURCE SECTION: FROM (STARTING POINT) */}
       <View style={styles.fieldRow}>
         <View style={styles.dotIndicatorStart} />
+
         <View style={styles.fieldContent}>
-          <Text style={styles.fieldLabel}>From (Starting Point)</Text>
+          <Text style={styles.fieldLabel}>FROM (STARTING POINT / SOURCE)</Text>
           <TouchableOpacity
             onPress={onOpenSourceSearch}
             activeOpacity={0.8}
             style={styles.locationTitleTouchable}
+            accessibilityRole="button"
+            accessibilityLabel="Select starting point or origin"
           >
-            <Text style={styles.locationTitle} numberOfLines={1}>
-              {startNode ? startNode.name : 'Terminal 1 Main East Entrance (Default)'}
+            <Text
+              style={[
+                styles.locationTitle,
+                !startNode && styles.locationTitleDefault
+              ]}
+              numberOfLines={1}
+            >
+              {startNode ? startNode.name : 'Terminal 1 Main Entrance (East) · Default'}
             </Text>
-            <Text style={styles.locationSub}>
-              {startNode?.wheelchairAccessible ? 'Step-Free Verified' : 'Nearest station entrance gate'}
+            <Text style={styles.locationSub} numberOfLines={1}>
+              {startNode
+                ? (startNode.wheelchairAccessible ? 'Step-Free Verified' : 'Station Checkpoint')
+                : 'Tap to change starting gate, platform, or search concourse'}
             </Text>
           </TouchableOpacity>
         </View>
 
+        <View style={styles.rowActions}>
+          <TouchableOpacity
+            style={styles.actionIconBtn}
+            onPress={onSelectSourceOnMap}
+            activeOpacity={0.75}
+            accessibilityLabel="Pick start on map"
+            title="Pick on map"
+          >
+            <MapPinIcon size={16} color="#1A1A1A" strokeWidth={1.75} />
+          </TouchableOpacity>
+
+          {startNode && onClearSource && (
+            <TouchableOpacity
+              style={styles.actionIconBtn}
+              onPress={onClearSource}
+              activeOpacity={0.7}
+              accessibilityLabel="Reset to default entrance"
+            >
+              <CloseIcon size={14} color="#666660" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* 2. TRANSIT DIVIDER WITH SWAP BUTTON */}
+      <View style={styles.dividerRow}>
+        <View style={styles.connectorLine} />
         <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={onOpenQrScan}
-          activeOpacity={0.7}
-          accessibilityLabel="Anchor position via QR"
+          style={styles.swapBtn}
+          onPress={onSwap}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Swap start and destination"
         >
-          <QrIcon size={16} color="#1A1A1A" />
+          <SwapIcon size={15} color="#1A1A1A" strokeWidth={2} />
         </TouchableOpacity>
+        <View style={styles.dividerRight} />
+      </View>
+
+      {/* 3. DESTINATION SECTION: TO (DESTINATION) */}
+      <View style={styles.fieldRow}>
+        <View style={styles.dotIndicatorDestination} />
+
+        <View style={styles.fieldContent}>
+          <Text style={styles.fieldLabel}>TO (DESTINATION)</Text>
+          <TouchableOpacity
+            onPress={onOpenDestinationSearch}
+            activeOpacity={0.8}
+            style={styles.locationTitleTouchable}
+            accessibilityRole="button"
+            accessibilityLabel="Search destination"
+          >
+            <Text
+              style={[
+                styles.destinationTitle,
+                !destinationNode && styles.destinationPlaceholder
+              ]}
+              numberOfLines={1}
+            >
+              {destinationNode ? destinationNode.name : 'Where to? Platform, Lift, Restroom…'}
+            </Text>
+            <Text style={styles.locationSub} numberOfLines={1}>
+              {destinationNode
+                ? (destinationNode.level === -1
+                    ? 'Subway · Level -1'
+                    : destinationNode.level === 1
+                    ? 'FOB Bridge · Level 1'
+                    : 'Concourse · Level 0')
+                : 'Tap to search or select a platform chip (PF 1–10) below'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.rowActions}>
+          <TouchableOpacity
+            style={styles.actionIconBtn}
+            onPress={onOpenQrScan}
+            activeOpacity={0.75}
+            accessibilityLabel="Scan QR Checkpoint"
+            title="Scan QR Checkpoint"
+          >
+            <QrIcon size={16} color="#1A1A1A" strokeWidth={1.75} />
+          </TouchableOpacity>
+
+          {destinationNode && onClearDestination && (
+            <TouchableOpacity
+              style={styles.actionIconBtn}
+              onPress={onClearDestination}
+              activeOpacity={0.7}
+              accessibilityLabel="Clear destination"
+            >
+              <CloseIcon size={14} color="#666660" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  searchBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    width: '100%',
-    marginVertical: 4
-  },
-  bigSearchBar: {
-    flex: 1,
-    height: 48,
-    backgroundColor: '#FAFAF7',
-    borderRadius: Radii.input, // 8px
-    borderWidth: 1,
-    borderColor: Colors.borderInput,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    gap: 10
-  },
-  searchPlaceholder: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontWeight: '400',
-    flex: 1
-  },
-  qrScanBtn: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#FAFAF7',
-    borderRadius: Radii.input, // 8px
-    borderWidth: 1,
-    borderColor: Colors.borderInput,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  expandedCard: {
+  cardContainer: {
     backgroundColor: '#FAFAF7',
     borderRadius: Radii.card, // 12px
     borderWidth: 1,
@@ -206,66 +190,94 @@ const styles = StyleSheet.create({
     flex: 1
   },
   fieldLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#73736C',
+    letterSpacing: 0.5,
     marginBottom: 2
   },
   locationTitleTouchable: {
     paddingVertical: 2
   },
-  destinationTitle: {
-    fontSize: 15,
+  locationTitle: {
+    fontSize: 14.5,
     fontWeight: '700',
     color: Colors.textPrimary
   },
-  locationTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+  locationTitleDefault: {
+    color: '#1A1A1A'
+  },
+  destinationTitle: {
+    fontSize: 15,
+    fontWeight: '800',
     color: Colors.textPrimary
   },
-  locationSub: {
-    fontSize: 12,
+  destinationPlaceholder: {
+    fontSize: 14,
+    fontWeight: '500',
     color: Colors.textSecondary
   },
-  dotIndicatorDestination: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.primary // Hero Golden Yellow
+  locationSub: {
+    fontSize: 11.5,
+    color: Colors.textSecondary,
+    marginTop: 1
   },
   dotIndicatorStart: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#1A1A1A'
+    backgroundColor: '#16A34A', // Emerald green for start / source
+    borderWidth: 2,
+    borderColor: '#D1FAE5'
+  },
+  dotIndicatorDestination: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#F5B800', // Gold for hero destination
+    borderWidth: 2,
+    borderColor: '#FEF3C7'
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 6,
-    paddingLeft: 20
+    marginVertical: 4,
+    paddingLeft: 4
   },
-  dividerLine: {
+  connectorLine: {
+    width: 2,
+    height: 16,
+    backgroundColor: '#E5E7EB',
+    marginLeft: 4,
+    borderRadius: 1
+  },
+  dividerRight: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.border
+    backgroundColor: '#E5E7EB',
+    marginLeft: 8
   },
   swapBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8
+    marginLeft: 12,
+    ...Shadows.card
   },
-  actionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
+  rowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4
+  },
+  actionIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radii.sm,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: Colors.border,
