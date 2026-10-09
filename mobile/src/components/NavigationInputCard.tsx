@@ -78,7 +78,6 @@ export const NavigationInputCard: React.FC<NavigationInputCardProps> = ({
             onPress={onSelectSourceOnMap}
             activeOpacity={0.75}
             accessibilityLabel="Pick start on map"
-            title="Pick on map"
           >
             <MapPinIcon size={16} color="#1A1A1A" strokeWidth={1.75} />
           </TouchableOpacity>
@@ -151,7 +150,6 @@ export const NavigationInputCard: React.FC<NavigationInputCardProps> = ({
             onPress={onOpenQrScan}
             activeOpacity={0.75}
             accessibilityLabel="Scan QR Checkpoint"
-            title="Scan QR Checkpoint"
           >
             <QrIcon size={16} color="#1A1A1A" strokeWidth={1.75} />
           </TouchableOpacity>

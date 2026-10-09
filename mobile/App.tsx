@@ -41,41 +41,14 @@ export default function App() {
     setCurrentScreen(tab);
   };
 
-  const renderScreen = () => {
-    switch (currentScreen) {
-      case 'assistant':
-        return (
-          <AssistantChatScreen
-            onBack={() => setCurrentScreen('home')}
-            onStartRoute={handleStartRouteFromAssistant}
-          />
-        );
-      case 'facilities':
-        return (
-          <FacilityFinderScreen
-            onBack={() => setCurrentScreen('home')}
-            onNavigateToFacility={() => setCurrentScreen('home')}
-          />
-        );
-      case 'platformDetail':
-        return (
-          <PlatformDetailScreen
-            platform={selectedPlatform}
-            onBack={() => setCurrentScreen('home')}
-            onStartNavigate={() => setCurrentScreen('home')}
-            onAskAssistant={() => setCurrentScreen('assistant')}
-          />
-        );
-      case 'qrScan':
-        return (
-          <QrScanScreen
-            onBack={() => setCurrentScreen('home')}
-            onLocationUpdated={() => setCurrentScreen('home')}
-          />
-        );
-      case 'home':
-      default:
-        return (
+  const showBottomBar = !isDesktop && !isNavigating && currentScreen !== 'platformDetail';
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="dark" backgroundColor="#FFFFFF" />
+      <View style={styles.screenContent}>
+        {/* Keep HomeScreen continuously mounted so heavy station CAD vectors are parsed once */}
+        <View style={[styles.screenWrapper, currentScreen !== 'home' && styles.hiddenScreen]}>
           <HomeScreen
             onOpenAssistant={() => setCurrentScreen('assistant')}
             onOpenFacilities={() => setCurrentScreen('facilities')}
@@ -85,17 +58,46 @@ export default function App() {
             }}
             onOpenQrScan={() => setCurrentScreen('qrScan')}
           />
-        );
-    }
-  };
+        </View>
 
-  const showBottomBar = !isDesktop && !isNavigating && currentScreen !== 'platformDetail';
+        {/* Secondary tab & modal screens */}
+        {currentScreen === 'assistant' && (
+          <View style={styles.screenWrapper}>
+            <AssistantChatScreen
+              onBack={() => setCurrentScreen('home')}
+              onStartRoute={handleStartRouteFromAssistant}
+            />
+          </View>
+        )}
 
-  return (
-    <View style={styles.container}>
-      <StatusBar style="dark" backgroundColor="#FFFFFF" />
-      <View style={styles.screenContent}>
-        {renderScreen()}
+        {currentScreen === 'facilities' && (
+          <View style={styles.screenWrapper}>
+            <FacilityFinderScreen
+              onBack={() => setCurrentScreen('home')}
+              onNavigateToFacility={() => setCurrentScreen('home')}
+            />
+          </View>
+        )}
+
+        {currentScreen === 'platformDetail' && (
+          <View style={styles.screenWrapper}>
+            <PlatformDetailScreen
+              platform={selectedPlatform}
+              onBack={() => setCurrentScreen('home')}
+              onStartNavigate={() => setCurrentScreen('home')}
+              onAskAssistant={() => setCurrentScreen('assistant')}
+            />
+          </View>
+        )}
+
+        {currentScreen === 'qrScan' && (
+          <View style={styles.screenWrapper}>
+            <QrScanScreen
+              onBack={() => setCurrentScreen('home')}
+              onLocationUpdated={() => setCurrentScreen('home')}
+            />
+          </View>
+        )}
       </View>
       {showBottomBar && (
         <BottomNavBar
@@ -113,6 +115,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF'
   },
   screenContent: {
-    flex: 1
+    flex: 1,
+    position: 'relative'
+  },
+  screenWrapper: {
+    flex: 1,
+    width: '100%',
+    height: '100%'
+  },
+  hiddenScreen: {
+    display: 'none'
   }
 });
