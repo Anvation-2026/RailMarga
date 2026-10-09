@@ -18,6 +18,7 @@ import { RoutePreviewCard } from '../components/RoutePreviewCard';
 import { ProfilePicker } from '../components/ProfilePicker';
 import { QuickActionBadges } from '../components/QuickActionBadges';
 import { NavigationBanner } from '../components/NavigationBanner';
+import { ActiveNavigationSidebar } from '../components/ActiveNavigationSidebar';
 import { BlockageModal } from '../components/BlockageModal';
 import { useNavigationStore } from '../store/navigationStore';
 import { StationNode, localRouter, Coordinates } from '../services/localRouter';
@@ -31,7 +32,10 @@ import {
   ArrowRightIcon,
   FullscreenIcon,
   AlertIcon,
-  CloseIcon
+  CloseIcon,
+  SatelliteIcon,
+  FootprintsIcon,
+  ZapIcon
 } from '../components/Icons';
 
 interface HomeScreenProps {
@@ -85,7 +89,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     advanceStep,
     previousStep,
     toggleVoice,
-    checkNetwork
+    checkNetwork,
+    remainingDistanceMeters,
+    remainingEtaMinutes,
+    locationSource,
+    startSimulation,
+    startGpsTracking,
+    startPdrMode,
+    userLocation
   } = useNavigationStore();
 
   useEffect(() => {
@@ -325,7 +336,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               {activeRoute.destination.name}
             </Text>
             <Text style={styles.navHeaderStats}>
-              {activeRoute.estimatedTimeMinutes} min · {activeRoute.totalDistanceMeters}m · Step {currentStepIndex + 1}/{activeRoute.steps.length}
+              {(remainingEtaMinutes > 0 ? remainingEtaMinutes : activeRoute.estimatedTimeMinutes)} min · {(remainingDistanceMeters > 0 ? remainingDistanceMeters : activeRoute.totalDistanceMeters)}m · Step {currentStepIndex + 1}/{activeRoute.steps.length}{locationSource ? ` · ${locationSource}` : ''}
             </Text>
           </View>
           <TouchableOpacity
@@ -431,104 +442,224 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       >
         <View style={[styles.mainLayout, isDesktop && styles.desktopLayout]}>
           {/* ======================================================== */}
-          {/* LEFT COLUMN: QUICK COMMERCE TRIP PLANNER & AMENITIES     */}
+          {/* LEFT COLUMN: ACTIVE NAVIGATION SIDEBAR OR TRIP PLANNER   */}
           {/* ======================================================== */}
           <View style={[styles.plannerColumn, isDesktop && styles.plannerColumnDesktop]}>
-            {/* Card 1: Journey Search & Chips */}
-            <View style={styles.card}>
-              {/* Primary Search Bar */}
-              <NavigationInputCard
-                startNode={startNode}
-                destinationNode={destinationNode}
-                sourceMethod={sourceMethod}
-                destinationMethod={destinationMethod}
-                onOpenSourceSearch={() => handleOpenSearch('source')}
-                onOpenDestinationSearch={() => handleOpenSearch('destination')}
-                onSelectSourceOnMap={() => handleStartMapSelection('source')}
-                onSelectDestinationOnMap={() => handleStartMapSelection('destination')}
-                onOpenQrScan={onOpenQrScan}
-                onSwap={swapSourceAndDestination}
-                onClearSource={() => setStartNode(null)}
-                onClearDestination={() => setDestinationNode(null)}
+            {isNavigating && activeRoute ? (
+              <ActiveNavigationSidebar
+                route={activeRoute}
+                currentStepIndex={currentStepIndex}
+                voiceEnabled={voiceEnabled}
+                blockageAlert={blockageAlert}
+                onAdvanceStep={advanceStep}
+                onPreviousStep={previousStep}
+                onToggleVoice={toggleVoice}
+                onStopNavigation={stopNavigation}
               />
+            ) : (
+              <>
+                {/* Card 1: Journey Search & Chips */}
+                <View style={styles.card}>
+                  {/* Primary Search Bar */}
+                  <NavigationInputCard
+                    startNode={startNode}
+                    destinationNode={destinationNode}
+                    sourceMethod={sourceMethod}
+                    destinationMethod={destinationMethod}
+                    onOpenSourceSearch={() => handleOpenSearch('source')}
+                    onOpenDestinationSearch={() => handleOpenSearch('destination')}
+                    onSelectSourceOnMap={() => handleStartMapSelection('source')}
+                    onSelectDestinationOnMap={() => handleStartMapSelection('destination')}
+                    onOpenQrScan={onOpenQrScan}
+                    onSwap={swapSourceAndDestination}
+                    onClearSource={() => setStartNode(null)}
+                    onClearDestination={() => setDestinationNode(null)}
+                  />
 
-              {/* Horizontal Platform Chips (PF 1 to PF 10, min 44px tap target) */}
-              <View style={styles.platformsSection}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionHeading}>Running late? Tap your platform</Text>
-                  <Text style={styles.sectionHint}>PF 1 – 10</Text>
-                </View>
+                  {/* Horizontal Platform Chips (PF 1 to PF 10, min 44px tap target) */}
+                  <View style={styles.platformsSection}>
+                    <View style={styles.sectionHeaderRow}>
+                      <Text style={styles.sectionHeading}>Running late? Tap your platform</Text>
+                      <Text style={styles.sectionHint}>PF 1 – 10</Text>
+                    </View>
 
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.platformChipsRow}
-                >
-                  {PLATFORMS_LIST.map((pfNum) => {
-                    const isSelected = destinationNode?.name.includes(`Platform ${pfNum}`);
-                    return (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.platformChipsRow}
+                    >
+                      {PLATFORMS_LIST.map((pfNum) => {
+                        const isSelected = destinationNode?.name.includes(`Platform ${pfNum}`);
+                        return (
+                          <TouchableOpacity
+                            key={pfNum}
+                            style={[styles.platformChip, isSelected && styles.platformChipActive]}
+                            onPress={() => handleQuickPlatformSelect(pfNum)}
+                            activeOpacity={0.75}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Select Platform ${pfNum}`}
+                          >
+                            <Text style={[styles.platformChipText, isSelected && styles.platformChipTextActive]}>
+                              PF {pfNum}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+
+                  {/* Accessibility Segmented Pills */}
+                  <ProfilePicker
+                    selectedProfileId={selectedProfile}
+                    onSelectProfile={(p) => {
+                      setProfile(p);
+                      if (startNode && destinationNode) {
+                        scrollToResults();
+                      }
+                    }}
+                  />
+
+                  {/* Primary Golden Yellow CTA */}
+                  <TouchableOpacity
+                    style={styles.findRouteBtn}
+                    onPress={handleFindRoute}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.findRouteText}>
+                      {destinationNode ? 'Get directions' : 'Find route'}
+                    </Text>
+                    <ArrowRightIcon size={18} color="#1A1A1A" strokeWidth={2.5} />
+                  </TouchableOpacity>
+
+                  {/* Positioning Mode Toolbar (Real GPS, Scan QR, Real Steps PDR, Demo Walk) */}
+                  <View style={styles.positioningToolbar}>
+                    <View style={styles.positioningHeader}>
+                      <Text style={styles.positioningTitle}>POSITIONING MODE</Text>
+                      <View style={styles.positioningStatusBadge}>
+                        <View
+                          style={[
+                            styles.positioningStatusDot,
+                            {
+                              backgroundColor:
+                                locationSource === 'LIVE GPS'
+                                  ? '#16A34A'
+                                  : locationSource === 'REAL STEPS (PDR)'
+                                  ? '#10B981'
+                                  : locationSource === 'DEMO SIMULATION'
+                                  ? '#F5B800'
+                                  : '#2563EB'
+                            }
+                          ]}
+                        />
+                        <Text style={styles.positioningStatusText}>
+                          {locationSource ? `● ${locationSource}` : '● ANCHORED (CONCOURSE)'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.positioningBtnsRow}>
+                      {/* 1. Real GPS */}
                       <TouchableOpacity
-                        key={pfNum}
-                        style={[styles.platformChip, isSelected && styles.platformChipActive]}
-                        onPress={() => handleQuickPlatformSelect(pfNum)}
-                        activeOpacity={0.75}
+                        style={[styles.positioningBtn, locationSource === 'LIVE GPS' && styles.positioningBtnActive]}
+                        onPress={async () => {
+                          const success = await startGpsTracking();
+                          if (!success) {
+                            alert('Could not acquire GPS hardware coordinates indoors. Defaulting to Station Concourse anchor.');
+                          }
+                        }}
+                        activeOpacity={0.8}
                         accessibilityRole="button"
-                        accessibilityLabel={`Select Platform ${pfNum}`}
+                        accessibilityLabel="Use device real GPS"
                       >
-                        <Text style={[styles.platformChipText, isSelected && styles.platformChipTextActive]}>
-                          PF {pfNum}
+                        <SatelliteIcon size={13} color={locationSource === 'LIVE GPS' ? '#FFFFFF' : '#1A1A1A'} strokeWidth={1.8} />
+                        <Text style={[styles.positioningBtnText, locationSource === 'LIVE GPS' && styles.positioningBtnTextActive]}>
+                          Real GPS
                         </Text>
                       </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
 
-              {/* Accessibility Segmented Pills */}
-              <ProfilePicker
-                selectedProfileId={selectedProfile}
-                onSelectProfile={(p) => {
-                  setProfile(p);
-                  if (startNode && destinationNode) {
-                    scrollToResults();
-                  }
-                }}
-              />
+                      {/* 2. Scan QR */}
+                      <TouchableOpacity
+                        style={styles.positioningBtn}
+                        onPress={onOpenQrScan}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Scan indoor QR checkpoint"
+                      >
+                        <QrIcon size={13} color="#1A1A1A" strokeWidth={1.8} />
+                        <Text style={styles.positioningBtnText}>Scan QR</Text>
+                      </TouchableOpacity>
 
-              {/* Primary Golden Yellow CTA */}
-              <TouchableOpacity
-                style={styles.findRouteBtn}
-                onPress={handleFindRoute}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-              >
-                <Text style={styles.findRouteText}>
-                  {destinationNode ? 'Get directions' : 'Find route'}
-                </Text>
-                <ArrowRightIcon size={18} color="#1A1A1A" strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
+                      {/* 3. Real Steps (PDR) */}
+                      <TouchableOpacity
+                        style={[styles.positioningBtn, locationSource === 'REAL STEPS (PDR)' && styles.positioningBtnActiveEmerald]}
+                        onPress={async () => {
+                          if (!activeRoute) {
+                            await handleQuickPlatformSelect(8);
+                          }
+                          startPdrMode();
+                          scrollToResults();
+                        }}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Start accelerometer step detection"
+                      >
+                        <FootprintsIcon size={13} color={locationSource === 'REAL STEPS (PDR)' ? '#FFFFFF' : '#047857'} strokeWidth={1.8} />
+                        <Text style={[styles.positioningBtnText, locationSource === 'REAL STEPS (PDR)' && styles.positioningBtnTextActive]}>
+                          Real Steps
+                        </Text>
+                      </TouchableOpacity>
 
-            {/* Route Results & Turn Guidance Card */}
-            {activeRoute && !isNavigating && (
-              <View nativeID="route-results-section" style={{ width: '100%' }}>
-                <RoutePreviewCard
-                  route={activeRoute}
-                  selectedProfileId={selectedProfile}
-                  onStartNavigation={() => startNavigation()}
-                  onFitRoute={() => {}}
-                  onClosePreview={() => {
-                    setStartNode(null);
-                    setDestinationNode(null);
-                  }}
-                />
-              </View>
+                      {/* 4. Demo Walk */}
+                      <TouchableOpacity
+                        style={[styles.positioningBtn, styles.demoWalkBtnHighlight, locationSource === 'DEMO SIMULATION' && styles.positioningBtnActiveGold]}
+                        onPress={async () => {
+                          if (!activeRoute) {
+                            await handleQuickPlatformSelect(8);
+                          }
+                          startNavigation();
+                          startSimulation(1);
+                          scrollToResults();
+                        }}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Simulate walk in demo mode"
+                      >
+                        <ZapIcon size={13} color="#1A1A1A" strokeWidth={2.2} />
+                        <Text style={[styles.positioningBtnText, styles.demoWalkTextHighlight]}>
+                          Demo Walk
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Route Results & Turn Guidance Card */}
+                {activeRoute && !isNavigating && (
+                  <View nativeID="route-results-section" style={{ width: '100%' }}>
+                    <RoutePreviewCard
+                      route={activeRoute}
+                      selectedProfileId={selectedProfile}
+                      onStartNavigation={() => startNavigation()}
+                      onStartDemoSimulation={() => {
+                        startNavigation();
+                        startSimulation(1);
+                      }}
+                      onFitRoute={() => {}}
+                      onClosePreview={() => {
+                        setStartNode(null);
+                        setDestinationNode(null);
+                      }}
+                    />
+                  </View>
+                )}
+
+                {/* Essential Amenities Grid (4-Column Blinkit Category Tiles) */}
+                <View style={styles.card}>
+                  <QuickActionBadges onSelectAction={handleQuickAction} />
+                </View>
+              </>
             )}
-
-            {/* Essential Amenities Grid (4-Column Blinkit Category Tiles) */}
-            <View style={styles.card}>
-              <QuickActionBadges onSelectAction={handleQuickAction} />
-            </View>
           </View>
 
           {/* ======================================================== */}
@@ -559,6 +690,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               {/* Interactive Vector Map */}
               <KsrMap
                 routeCoordinates={activeRoute?.pathGeometry}
+                userLocation={userLocation || startNode?.coordinates}
                 currentLocation={startNode?.coordinates}
                 destinationLocation={destinationNode?.coordinates}
                 onSelectPlatform={handlePlatformTapped}
@@ -606,11 +738,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </View>
 
-        <View style={{ height: isNavigating ? 260 : 70 }} />
+        <View style={{ height: (isNavigating && !isDesktop) ? 140 : 40 }} />
       </ScrollView>
 
-      {/* Turn-by-Turn Navigation Overlay Banner */}
-      {isNavigating && activeRoute && (
+      {/* Turn-by-Turn Navigation Overlay Banner (Mobile screens only) */}
+      {isNavigating && activeRoute && !isDesktop && (
         <View style={styles.bannerContainer}>
           <NavigationBanner
             route={activeRoute}
@@ -1082,5 +1214,91 @@ const styles = StyleSheet.create({
     bottom: 12,
     left: 12,
     right: 12
+  },
+  positioningToolbar: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border
+  },
+  positioningHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8
+  },
+  positioningTitle: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#73736C',
+    letterSpacing: 0.6
+  },
+  positioningStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FAFAF7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  positioningStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3
+  },
+  positioningStatusText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    letterSpacing: 0.3
+  },
+  positioningBtnsRow: {
+    flexDirection: 'row',
+    gap: 6
+  },
+  positioningBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 7,
+    paddingHorizontal: 4,
+    borderRadius: Radii.sm,
+    backgroundColor: '#FAFAF7',
+    borderWidth: 1,
+    borderColor: Colors.border
+  },
+  positioningBtnActive: {
+    backgroundColor: '#166534',
+    borderColor: '#166534'
+  },
+  positioningBtnActiveEmerald: {
+    backgroundColor: '#047857',
+    borderColor: '#047857'
+  },
+  positioningBtnActiveGold: {
+    backgroundColor: '#F5B800',
+    borderColor: '#1A1A1A'
+  },
+  positioningBtnText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#1A1A1A'
+  },
+  positioningBtnTextActive: {
+    color: '#FFFFFF'
+  },
+  demoWalkBtnHighlight: {
+    backgroundColor: '#FFFDF5',
+    borderColor: '#F5B800',
+    borderWidth: 1.5
+  },
+  demoWalkTextHighlight: {
+    color: '#1A1A1A',
+    fontWeight: '800'
   }
 });

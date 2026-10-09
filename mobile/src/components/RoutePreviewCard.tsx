@@ -9,13 +9,15 @@ import {
   CloseIcon,
   CheckIcon,
   AlertIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  PlayIcon
 } from './Icons';
 
 interface RoutePreviewCardProps {
   route: RouteResult;
   selectedProfileId: string;
   onStartNavigation: () => void;
+  onStartDemoSimulation?: () => void;
   onFitRoute: () => void;
   onClosePreview?: () => void;
 }
@@ -24,6 +26,7 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
   route,
   selectedProfileId,
   onStartNavigation,
+  onStartDemoSimulation,
   onFitRoute,
   onClosePreview
 }) => {
@@ -104,7 +107,7 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
             <View style={styles.stepContent}>
               <Text style={styles.stepInstruction}>{step.instruction}</Text>
               <Text style={styles.stepMeta}>
-                {step.distanceMeters} m · Floor: {step.floor === -1 ? 'Subway' : step.floor === 1 ? 'FOB' : 'Level 0'}
+                {step.distance} m · Floor: {(step as any).floor === -1 ? 'Subway' : (step as any).floor === 1 ? 'FOB' : 'Level 0'}
               </Text>
             </View>
           </View>
@@ -123,17 +126,32 @@ export const RoutePreviewCard: React.FC<RoutePreviewCardProps> = ({
         )}
       </View>
 
-      {/* Sticky Hero Golden Yellow Action CTA */}
-      <TouchableOpacity
-        style={styles.startNavBtn}
-        onPress={onStartNavigation}
-        activeOpacity={0.85}
-        accessibilityRole="button"
-        accessibilityLabel="Start turn-by-turn navigation"
-      >
-        <Text style={styles.startNavText}>Start navigation</Text>
-        <ArrowRightIcon size={18} color="#1A1A1A" strokeWidth={2.5} />
-      </TouchableOpacity>
+      {/* Action Buttons Row */}
+      <View style={styles.actionBtnsRow}>
+        <TouchableOpacity
+          style={styles.startNavBtn}
+          onPress={onStartNavigation}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Start live turn-by-turn navigation"
+        >
+          <Text style={styles.startNavText}>Start navigation</Text>
+          <ArrowRightIcon size={18} color="#1A1A1A" strokeWidth={2.5} />
+        </TouchableOpacity>
+
+        {onStartDemoSimulation && (
+          <TouchableOpacity
+            style={styles.demoSimBtn}
+            onPress={onStartDemoSimulation}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Simulate route walk for demo"
+          >
+            <PlayIcon size={16} color="#1A1A1A" strokeWidth={2} />
+            <Text style={styles.demoSimText}>Simulate walk</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };
@@ -283,19 +301,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.textSecondary
   },
+  actionBtnsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: Spacing.sm
+  },
   startNavBtn: {
+    flex: 1,
     height: 48,
     backgroundColor: Colors.primary, // Hero Golden Yellow
     borderRadius: Radii.pill, // 999px
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: Spacing.sm
+    gap: 8
   },
   startNavText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
+    color: '#1A1A1A'
+  },
+  demoSimBtn: {
+    height: 48,
+    paddingHorizontal: 14,
+    backgroundColor: '#FAFAF7',
+    borderRadius: Radii.pill,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#1A1A1A'
+  },
+  demoSimText: {
+    fontSize: 13,
+    fontWeight: '700',
     color: '#1A1A1A'
   }
 });

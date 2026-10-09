@@ -438,4 +438,60 @@ export const SendIcon: React.FC<IconProps> = ({ size = 18, color = '#1A1A1A', st
     </SvgContainer>
   );
 };
+export const PlayIcon: React.FC<IconProps> = ({ size = 18, color = '#1A1A1A', strokeWidth = 1.75 }) => {
+  const xml = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><polygon points="6 3 20 12 6 21 6 3" stroke="${color}" stroke-width="${strokeWidth}" stroke-linejoin="round" fill="${color}"/></svg>`;
+  return (
+    <SvgContainer size={size} xml={xml}>
+      <polygon points="6 3 20 12 6 21 6 3" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" fill={color} />
+    </SvgContainer>
+  );
+};
+
+export const PauseIcon: React.FC<IconProps> = ({ size = 18, color = '#1A1A1A', strokeWidth = 1.75 }) => {
+  const xml = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" rx="1" fill="${color}" stroke="${color}" stroke-width="${strokeWidth}"/><rect x="14" y="4" width="4" height="16" rx="1" fill="${color}" stroke="${color}" stroke-width="${strokeWidth}"/></svg>`;
+  return (
+    <SvgContainer size={size} xml={xml}>
+      <rect x="6" y="4" width="4" height="16" rx="1" fill={color} stroke={color} strokeWidth={strokeWidth} />
+      <rect x="14" y="4" width="4" height="16" rx="1" fill={color} stroke={color} strokeWidth={strokeWidth} />
+    </SvgContainer>
+  );
+};
+
+export const RestartIcon: React.FC<IconProps> = ({ size = 18, color = '#1A1A1A', strokeWidth = 1.75 }) => {
+  const xml = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return (
+    <SvgContainer size={size} xml={xml}>
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 3v5h5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </SvgContainer>
+  );
+};
+
+export const SatelliteIcon: React.FC<IconProps> = ({ size = 18, color = '#1A1A1A', strokeWidth = 1.75 }) => {
+  const xml = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><path d="M13 7l4-4M17 11l4-4M9 11l2 2-6 6a2 2 0 0 1-2.83-2.83l6-6 2 2zM16 8l-4 4M8 16l-3 3M19 5l-1-1" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.5" cy="6.5" r="3.5" stroke="${color}" stroke-width="${strokeWidth}"/></svg>`;
+  return (
+    <SvgContainer size={size} xml={xml}>
+      <path d="M13 7l4-4M17 11l4-4M9 11l2 2-6 6a2 2 0 0 1-2.83-2.83l6-6 2 2zM16 8l-4 4M8 16l-3 3M19 5l-1-1" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="17.5" cy="6.5" r="3.5" stroke={color} strokeWidth={strokeWidth} />
+    </SvgContainer>
+  );
+};
+
+export const FootprintsIcon: React.FC<IconProps> = ({ size = 18, color = '#1A1A1A', strokeWidth = 1.75 }) => {
+  const xml = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><path d="M8 13c-1.5 0-2.5 1.5-2.5 3s.8 2.5 2 2.5 2-.5 2-2-1-3.5-1.5-3.5zM16 6c-1.5 0-2.5 1.5-2.5 3s.8 2.5 2 2.5 2-.5 2-2-1-3.5-1.5-3.5zM7.5 19.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM15.5 12.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return (
+    <SvgContainer size={size} xml={xml}>
+      <path d="M8 13c-1.5 0-2.5 1.5-2.5 3s.8 2.5 2 2.5 2-.5 2-2-1-3.5-1.5-3.5zM16 6c-1.5 0-2.5 1.5-2.5 3s.8 2.5 2 2.5 2-.5 2-2-1-3.5-1.5-3.5zM7.5 19.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM15.5 12.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+    </SvgContainer>
+  );
+};
+
+export const ZapIcon: React.FC<IconProps> = ({ size = 18, color = '#1A1A1A', strokeWidth = 1.75 }) => {
+  const xml = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" stroke="${color}" stroke-width="${strokeWidth}" stroke-linejoin="round" fill="none"/></svg>`;
+  return (
+    <SvgContainer size={size} xml={xml}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" fill="none" />
+    </SvgContainer>
+  );
+};
 
