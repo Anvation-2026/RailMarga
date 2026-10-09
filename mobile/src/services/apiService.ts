@@ -9,6 +9,7 @@ const LOCAL_WIFI_IP = '10.0.5.101';
 const CANDIDATE_URLS = [
   ENV_BACKEND_URL,
   'http://localhost:3000',
+  'http://10.24.42.234:3000',
   `http://${LOCAL_WIFI_IP}:3000`,
   'http://10.24.42.26:3000',
   'http://10.0.2.2:3000'
